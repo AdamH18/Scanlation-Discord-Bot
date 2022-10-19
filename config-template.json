@@ -1,4 +1,4 @@
 {
     "Token" : "token",
-    "RemoveCommands" : "True"
+    "RemoveCommands" : "False"
 }
