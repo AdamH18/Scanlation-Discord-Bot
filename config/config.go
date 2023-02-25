@@ -8,17 +8,19 @@ import (
 )
 
 var (
-	Token          string //To store value of Token.
-	RemoveCommands bool   //Choose whether or not to remove registered slash commands from Discord upon shutdown.
-	DatabaseFile   string //Location of database file for bot to use.
+	Token                 string //To store value of Token.
+	RemoveCommands        bool   //Choose whether or not to remove registered slash commands from Discord upon shutdown.
+	DatabaseFile          string //Location of database file for bot to use.
+	DatabaseBackupChannel string //Discord channel on which to dump DB backups
 
 	config *configStruct //To store value extracted from config.json.
 )
 
 type configStruct struct {
-	Token          string `json: "Token"`
-	RemoveCommands string `json: "RemoveCommands"`
-	DatabaseFile   string `json: "DatabaseFile"`
+	Token                 string `json: "Token"`
+	RemoveCommands        string `json: "RemoveCommands"`
+	DatabaseFile          string `json: "DatabaseFile"`
+	DatabaseBackupChannel string `json: "DatabaseBackupChannel`
 }
 
 func ReadConfig() error {
@@ -47,6 +49,7 @@ func ReadConfig() error {
 	Token = config.Token
 	RemoveCommands, _ = strconv.ParseBool(config.RemoveCommands)
 	DatabaseFile = config.DatabaseFile
+	DatabaseBackupChannel = config.DatabaseBackupChannel
 
 	//If there isn't any error we will return nil.
 	return nil

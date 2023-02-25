@@ -1,5 +1,6 @@
 {
     "Token" : "token",
     "RemoveCommands" : "False",
-    "DatabaseFile" : "sqlite.db"
+    "DatabaseFile" : "sqlite.db",
+    "DatabaseBackupChannel" : "ChannelID"
 }

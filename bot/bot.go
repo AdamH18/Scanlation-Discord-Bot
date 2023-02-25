@@ -8,9 +8,12 @@ import (
 	"github.com/bwmarrin/discordgo" //discordgo package from the repo of bwmarrin .
 )
 
-var BotId string
-var goBot *discordgo.Session
-var registeredCommands []*discordgo.ApplicationCommand
+var (
+	BotId              string
+	goBot              *discordgo.Session
+	registeredCommands []*discordgo.ApplicationCommand
+	quit               chan struct{}
+)
 
 func Start() {
 
@@ -52,11 +55,20 @@ func Start() {
 	}
 
 	//If every thing works fine we will be printing this.
-	log.Println("Bot is running !")
+	log.Println("Bot is running!")
+
+	//Quit channel used to close all goroutines
+	quit = make(chan struct{})
+	log.Println("Starting reminder checking")
+	go CheckReminders()
+	log.Println("Starting backups")
+	go BackupDB()
 }
 
 func Stop() {
 	defer goBot.Close()
+	//Close all goroutines
+	close(quit)
 
 	if config.RemoveCommands {
 		log.Println("Removing commands...")

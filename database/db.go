@@ -3,12 +3,14 @@ package database
 import (
 	"database/sql"
 	"log"
+	"sync"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 var (
 	Repo *SQLiteRepository
+	M    sync.Mutex
 )
 
 type SQLiteRepository struct {
@@ -21,6 +23,7 @@ func NewSQLiteRepository(db *sql.DB) *SQLiteRepository {
 	}
 }
 
+// DB initialization
 func StartDatabase(loc string) {
 	db, err := sql.Open("sqlite3", loc)
 	if err != nil {
