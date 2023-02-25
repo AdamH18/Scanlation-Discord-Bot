@@ -10,6 +10,7 @@ import (
 var (
 	Token          string //To store value of Token.
 	RemoveCommands bool   //Choose whether or not to remove registered slash commands from Discord upon shutdown.
+	DatabaseFile   string //Location of database file for bot to use.
 
 	config *configStruct //To store value extracted from config.json.
 )
@@ -17,6 +18,7 @@ var (
 type configStruct struct {
 	Token          string `json: "Token"`
 	RemoveCommands string `json: "RemoveCommands"`
+	DatabaseFile   string `json: "DatabaseFile"`
 }
 
 func ReadConfig() error {
@@ -44,6 +46,7 @@ func ReadConfig() error {
 	// After storing value in config variable we will access it and storing it in our declared variables .
 	Token = config.Token
 	RemoveCommands, _ = strconv.ParseBool(config.RemoveCommands)
+	DatabaseFile = config.DatabaseFile
 
 	//If there isn't any error we will return nil.
 	return nil

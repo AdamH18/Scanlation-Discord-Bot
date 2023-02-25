@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"scanlation-discord-bot/bot"
 	"scanlation-discord-bot/config"
+	"scanlation-discord-bot/database"
 )
 
 func init() {
@@ -19,6 +20,7 @@ func init() {
 
 // https://golangexample.com/discord-bot-in-golang/
 func main() {
+	database.StartDatabase(config.DatabaseFile)
 	bot.Start()
 
 	stop := make(chan os.Signal, 1)

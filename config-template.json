@@ -1,4 +1,5 @@
 {
     "Token" : "token",
-    "RemoveCommands" : "False"
+    "RemoveCommands" : "False",
+    "DatabaseFile" : "sqlite.db"
 }

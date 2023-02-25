@@ -2,9 +2,18 @@ package bot
 
 import (
 	"log"
+	"scanlation-discord-bot/database"
 
 	"github.com/bwmarrin/discordgo"
 )
+
+func OptionsToMap(options []*discordgo.ApplicationCommandInteractionDataOption) map[string]*discordgo.ApplicationCommandInteractionDataOption {
+	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
+	for _, opt := range options {
+		optionMap[opt.Name] = opt
+	}
+	return optionMap
+}
 
 func TestHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -14,6 +23,12 @@ func TestHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		},
 	})
 	log.Println("Test command used.")
+}
+
+func DBHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	options := OptionsToMap(i.ApplicationCommandData().Options)
+	text := options["text"].StringValue()
+	database.Repo.Create(text)
 }
 
 // Creates handlers for all slash commands based on relationship defined in commandHandlers
