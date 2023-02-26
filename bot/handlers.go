@@ -68,6 +68,7 @@ func AddAnyReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate)
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: response,
+			Flags:   discordgo.MessageFlagsEphemeral,
 		},
 	})
 }
@@ -105,6 +106,7 @@ func AddReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: response,
+			Flags:   discordgo.MessageFlagsEphemeral,
 		},
 	})
 }
@@ -131,6 +133,7 @@ func RemAnyReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate)
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: response,
+			Flags:   discordgo.MessageFlagsEphemeral,
 		},
 	})
 }
@@ -157,6 +160,7 @@ func RemReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: response,
+			Flags:   discordgo.MessageFlagsEphemeral,
 		},
 	})
 }
@@ -178,6 +182,7 @@ func MyRemindersHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: response,
+			Flags:   discordgo.MessageFlagsEphemeral,
 		},
 	})
 }
@@ -202,6 +207,7 @@ func UserRemindersHandler(s *discordgo.Session, i *discordgo.InteractionCreate) 
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: response,
+			Flags:   discordgo.MessageFlagsEphemeral,
 		},
 	})
 }
@@ -228,6 +234,7 @@ func AllRemindersHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: response,
+			Flags:   discordgo.MessageFlagsEphemeral,
 		},
 	})
 }
@@ -250,6 +257,7 @@ func SetAnyAlarmHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: "Couldn't understand the date-time you input. Please try again while ensuring in 'YYYY-MM-DD HH:MM:SS' format",
+				Flags:   discordgo.MessageFlagsEphemeral,
 			},
 		})
 		return
@@ -276,6 +284,7 @@ func SetAnyAlarmHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: response,
+			Flags:   discordgo.MessageFlagsEphemeral,
 		},
 	})
 }
@@ -298,6 +307,7 @@ func SetAlarmHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: "Couldn't understand the date-time you input. Please try again while ensuring in 'YYYY-MM-DD HH:MM:SS' format",
+				Flags:   discordgo.MessageFlagsEphemeral,
 			},
 		})
 		return
@@ -324,6 +334,7 @@ func SetAlarmHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: response,
+			Flags:   discordgo.MessageFlagsEphemeral,
 		},
 	})
 }
