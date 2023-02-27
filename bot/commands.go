@@ -6,6 +6,7 @@ var (
 	adminPerms int64 = discordgo.PermissionAdministrator
 	dmPerms          = false
 	daysMin          = 1.0
+	hourModMin       = -12.0
 
 	//Definitions for all slash commands and their expected parameters
 	commands = []*discordgo.ApplicationCommand{
@@ -24,7 +25,7 @@ var (
 				{
 					Type:        discordgo.ApplicationCommandOptionInteger,
 					Name:        "days",
-					Description: "Frequency of reminder in days",
+					Description: "Time until reminder in days",
 					MinValue:    &daysMin,
 					Required:    true,
 				},
@@ -40,6 +41,14 @@ var (
 					Description: "Should this reminder repeat?",
 					Required:    false,
 				},
+				{
+					Type:        discordgo.ApplicationCommandOptionInteger,
+					Name:        "hours-mod",
+					Description: "Modify reminder time by plus or minus 12 hours",
+					MinValue:    &hourModMin,
+					MaxValue:    12.0,
+					Required:    false,
+				},
 			},
 		},
 		{
@@ -50,7 +59,7 @@ var (
 				{
 					Type:        discordgo.ApplicationCommandOptionInteger,
 					Name:        "days",
-					Description: "Frequency of reminder in days",
+					Description: "Time until reminder in days",
 					MinValue:    &daysMin,
 					Required:    true,
 				},
@@ -64,6 +73,14 @@ var (
 					Type:        discordgo.ApplicationCommandOptionBoolean,
 					Name:        "repeat",
 					Description: "Should this reminder repeat?",
+					Required:    false,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionInteger,
+					Name:        "hours-mod",
+					Description: "Modify reminder time by plus or minus 12 hours",
+					MinValue:    &hourModMin,
+					MaxValue:    12.0,
 					Required:    false,
 				},
 			},
@@ -161,7 +178,7 @@ var (
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
 					Name:        "date-time",
-					Description: "Date and time of alarm. Must follow format 'YYYY-MM-DD HH:MM:SS' (EST I think, sorry)",
+					Description: "Date and time of alarm. Must follow format 'YYYY-MM-DD HH:MM:SS' (GMT)",
 					Required:    true,
 				},
 				{

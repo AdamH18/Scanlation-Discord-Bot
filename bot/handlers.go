@@ -50,10 +50,16 @@ func AddAnyReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate)
 	if _, ok := options["repeat"]; ok {
 		rem.Repeat = options["repeat"].BoolValue()
 	}
-	log.Printf("User: %s Days: %d Message: %s Repeat: %t", rem.User, rem.Days, rem.Message, rem.Repeat)
+	var mod int64
+	if _, ok := options["hours-mod"]; ok {
+		mod = options["hours-mod"].IntValue()
+	} else {
+		mod = 0
+	}
+	log.Printf("User: %s Days: %d Message: %s Repeat: %t Mod: %d", rem.User, rem.Days, rem.Message, rem.Repeat, mod)
 
-	//Reminder time is user specified number of days after current time
-	rem.Time = (time.Now().Add(time.Hour * time.Duration(rem.Days*24))).Format("2006-01-02 15:04:05")
+	//Reminder time is user specified number of days after current time, modified by user specified hour mod
+	rem.Time = (time.Now().Add(time.Hour * time.Duration(rem.Days*24)).Add(time.Hour * time.Duration(mod))).Format("2006-01-02 15:04:05")
 
 	//Add reminder to DB
 	err := database.Repo.AddReminder(rem)
@@ -88,10 +94,16 @@ func AddReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if _, ok := options["repeat"]; ok {
 		rem.Repeat = options["repeat"].BoolValue()
 	}
-	log.Printf("Days: %d Message: %s Repeat: %t", rem.Days, rem.Message, rem.Repeat)
+	var mod int64
+	if _, ok := options["hours-mod"]; ok {
+		mod = options["hours-mod"].IntValue()
+	} else {
+		mod = 0
+	}
+	log.Printf("Days: %d Message: %s Repeat: %t Mod: %d", rem.Days, rem.Message, rem.Repeat, mod)
 
-	//Reminder time is user specified number of days after current time
-	rem.Time = (time.Now().Add(time.Hour * time.Duration(rem.Days*24))).Format("2006-01-02 15:04:05")
+	//Reminder time is user specified number of days after current time, modified by user specified hour mod
+	rem.Time = (time.Now().Add(time.Hour * time.Duration(rem.Days*24)).Add(time.Hour * time.Duration(mod))).Format("2006-01-02 15:04:05")
 
 	//Add reminder to DB
 	err := database.Repo.AddReminder(rem)
