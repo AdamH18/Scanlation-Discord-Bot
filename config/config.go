@@ -33,9 +33,6 @@ func ReadConfig() error {
 		return err
 	}
 
-	// We are here printing value of file variable by explicitly converting it to string .
-
-	log.Println(string(file))
 	// Here we performing a simple task by copying value of file into config variable which we have declared above , and if there any error we are storing it in err . Unmarshal takes second arguments reference remember it .
 	err = json.Unmarshal(file, &config)
 
