@@ -70,8 +70,36 @@ func CheckReminders() {
 	}
 }
 
-// Send DB backups to channel identified in config
+func DoBackup() {
+	log.Println("Backing up DB")
+	name := "DB_" + time.Now().Format(time.RFC3339) + ".db"
+	database.M.Lock()
+	r, err := os.Open(config.DatabaseFile)
+	if err != nil {
+		log.Printf("Error opening DB file: %s\n", err)
+		database.M.Unlock()
+		return
+	}
+	_, err = goBot.ChannelFileSend(config.DatabaseBackupChannel, name, r)
+	r.Close()
+	database.M.Unlock()
+	if err != nil {
+		log.Printf("Error backing up file: %s\n", err)
+	}
+}
+
+// Send DB backups to channel identified in config at midnight
 func BackupDB() {
+	//Calculate time until midnight and start timer
+	t := time.Now()
+	n := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location()).Add(time.Hour * 24)
+	toMidnight := time.NewTimer(n.Sub(t))
+
+	//At midnight run backup
+	<-toMidnight.C
+	DoBackup()
+
+	//Swap to 24 hour ticker afterwards
 	ticker := time.NewTicker(time.Hour * 24)
 	defer ticker.Stop()
 
@@ -80,21 +108,7 @@ func BackupDB() {
 		case <-quit:
 			return
 		case <-ticker.C:
-			log.Println("Backing up DB")
-			name := "DB_" + time.Now().Format(time.RFC3339) + ".db"
-			database.M.Lock()
-			r, err := os.Open(config.DatabaseFile)
-			if err != nil {
-				log.Printf("Error opening DB file: %s\n", err)
-				database.M.Unlock()
-				continue
-			}
-			_, err = goBot.ChannelFileSend(config.DatabaseBackupChannel, name, r)
-			r.Close()
-			database.M.Unlock()
-			if err != nil {
-				log.Printf("Error backing up file: %s\n", err)
-			}
+			DoBackup()
 		}
 	}
 }
