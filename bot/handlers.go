@@ -8,36 +8,9 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-// Helper command to turn Discord Options array to a map of labels to options
-func OptionsToMap(options []*discordgo.ApplicationCommandInteractionDataOption) map[string]*discordgo.ApplicationCommandInteractionDataOption {
-	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
-	for _, opt := range options {
-		optionMap[opt.Name] = opt
-	}
-	return optionMap
-}
-
-// Takes a user ID and returns the username
-func GetUserName(guildID string, userID string) (string, error) {
-	usr, err := goBot.GuildMember(guildID, userID)
-	if err != nil {
-		return "", err
-	}
-	return usr.User.Username, nil
-}
-
-// Takes a user ID and returns a ping string
-func GetUserPing(guildID string, userID string) (string, error) {
-	usr, err := goBot.GuildMember(guildID, userID)
-	if err != nil {
-		return "", err
-	}
-	return usr.Mention(), nil
-}
-
 // Handler for add_any_reminder
 func AddAnyReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	log.Printf("User %s (%s) in guild %s and channel %s used add_any_reminder command with options:\n", i.Member.User.Username, i.Member.User.ID, i.GuildID, i.ChannelID)
+	LogCommand(i, "add_any_reminder")
 	//Compiling values into Reminder struct
 	var rem database.Reminder
 	rem.Guild = i.GuildID
@@ -69,19 +42,12 @@ func AddAnyReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate)
 	} else {
 		response = "Successfully added reminder to database"
 	}
-	log.Printf("Response: %s\n", response)
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: response,
-			Flags:   discordgo.MessageFlagsEphemeral,
-		},
-	})
+	Respond(s, i, response)
 }
 
 // Handler for add_reminder
 func AddReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	log.Printf("User %s (%s) in guild %s and channel %s used add_reminder command with options:\n", i.Member.User.Username, i.Member.User.ID, i.GuildID, i.ChannelID)
+	LogCommand(i, "add_reminder")
 	//Compiling values into Reminder struct
 	var rem database.Reminder
 	rem.Guild = i.GuildID
@@ -113,19 +79,12 @@ func AddReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	} else {
 		response = "Successfully added reminder to database"
 	}
-	log.Printf("Response: %s\n", response)
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: response,
-			Flags:   discordgo.MessageFlagsEphemeral,
-		},
-	})
+	Respond(s, i, response)
 }
 
 // Handler for rem_any_reminder
 func RemAnyReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	log.Printf("User %s (%s) in guild %s and channel %s used rem_any_reminder command with option:\n", i.Member.User.Username, i.Member.User.ID, i.GuildID, i.ChannelID)
+	LogCommand(i, "rem_any_reminder")
 	//Uses reminder ID to identify for removal
 	options := OptionsToMap(i.ApplicationCommandData().Options)
 	remID := options["id"].IntValue()
@@ -140,19 +99,12 @@ func RemAnyReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate)
 	} else {
 		response = "Successfully removed reminder from database"
 	}
-	log.Printf("Response: %s\n", response)
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: response,
-			Flags:   discordgo.MessageFlagsEphemeral,
-		},
-	})
+	Respond(s, i, response)
 }
 
 // Handler for rem_reminder
 func RemReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	log.Printf("User %s (%s) in guild %s and channel %s used rem_reminder command with option:\n", i.Member.User.Username, i.Member.User.ID, i.GuildID, i.ChannelID)
+	LogCommand(i, "rem_reminder")
 	//Uses reminder ID to identify for removal, also sends user ID to ensure user isn't removing someone else's reminder
 	options := OptionsToMap(i.ApplicationCommandData().Options)
 	remID := options["id"].IntValue()
@@ -167,19 +119,12 @@ func RemReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	} else {
 		response = "Successfully removed reminder from database"
 	}
-	log.Printf("Response: %s\n", response)
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: response,
-			Flags:   discordgo.MessageFlagsEphemeral,
-		},
-	})
+	Respond(s, i, response)
 }
 
 // Handler for my_reminders
 func MyRemindersHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	log.Printf("User %s (%s) in guild %s and channel %s used my_reminders command\n", i.Member.User.Username, i.Member.User.ID, i.GuildID, i.ChannelID)
+	LogCommand(i, "my_reminders")
 	//Send user ID to DB to find corresponding reminders
 	rems, err := database.Repo.GetUserReminders(i.Member.User.ID)
 	response := ""
@@ -189,19 +134,12 @@ func MyRemindersHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		//Build reminders table from results
 		response = BuildRemindersTable(i.Member.User.Username, rems)
 	}
-	log.Printf("Response: %s\n", response)
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: response,
-			Flags:   discordgo.MessageFlagsEphemeral,
-		},
-	})
+	Respond(s, i, response)
 }
 
 // Handler for user_reminders
 func UserRemindersHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	log.Printf("User %s (%s) in guild %s and channel %s used user_reminders command with option:\n", i.Member.User.Username, i.Member.User.ID, i.GuildID, i.ChannelID)
+	LogCommand(i, "user_reminders")
 	options := OptionsToMap(i.ApplicationCommandData().Options)
 	userID := options["user"].UserValue(s).ID
 	log.Printf("User: %s", userID)
@@ -214,19 +152,12 @@ func UserRemindersHandler(s *discordgo.Session, i *discordgo.InteractionCreate) 
 		//Build reminders table from results
 		response = BuildRemindersTable(options["user"].UserValue(s).Username, rems)
 	}
-	log.Printf("Response: %s\n", response)
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: response,
-			Flags:   discordgo.MessageFlagsEphemeral,
-		},
-	})
+	Respond(s, i, response)
 }
 
 // Handler for all_reminders
 func AllRemindersHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	log.Printf("User %s (%s) in guild %s and channel %s used all_reminders command\n", i.Member.User.Username, i.Member.User.ID, i.GuildID, i.ChannelID)
+	LogCommand(i, "all_reminders")
 	//Send query to DB
 	rems, err := database.Repo.GetAllReminders()
 	response := ""
@@ -241,19 +172,12 @@ func AllRemindersHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			response = resp
 		}
 	}
-	log.Printf("Response: %s\n", response)
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: response,
-			Flags:   discordgo.MessageFlagsEphemeral,
-		},
-	})
+	Respond(s, i, response)
 }
 
 // Handler for set_any_alarm
 func SetAnyAlarmHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	log.Printf("User %s (%s) in guild %s and channel %s used set_any_reminder command with options:\n", i.Member.User.Username, i.Member.User.ID, i.GuildID, i.ChannelID)
+	LogCommand(i, "set_any_alarm")
 	//Compiling values into Reminder struct
 	var rem database.Reminder
 	rem.Guild = i.GuildID
@@ -264,14 +188,7 @@ func SetAnyAlarmHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	//Checking if user input date-time is valid
 	_, err := time.Parse("2006-01-02 15:04:05", rem.Time)
 	if err != nil {
-		log.Println("Was unable to parse date-time")
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "Couldn't understand the date-time you input. Please try again while ensuring in 'YYYY-MM-DD HH:MM:SS' format",
-				Flags:   discordgo.MessageFlagsEphemeral,
-			},
-		})
+		Respond(s, i, "Couldn't understand the date-time you input. Please try again while ensuring in 'YYYY-MM-DD HH:MM:SS' format")
 		return
 	}
 	rem.Message = options["message"].StringValue()
@@ -291,19 +208,12 @@ func SetAnyAlarmHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	} else {
 		response = "Successfully added reminder to database"
 	}
-	log.Printf("Response: %s\n", response)
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: response,
-			Flags:   discordgo.MessageFlagsEphemeral,
-		},
-	})
+	Respond(s, i, response)
 }
 
 // Handler for set_alarm
 func SetAlarmHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	log.Printf("User %s (%s) in guild %s and channel %s used set_reminder command with options:\n", i.Member.User.Username, i.Member.User.ID, i.GuildID, i.ChannelID)
+	LogCommand(i, "set_alarm")
 	//Compiling values into Reminder struct
 	var rem database.Reminder
 	rem.Guild = i.GuildID
@@ -314,14 +224,7 @@ func SetAlarmHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	//Checking if user input date-time is valid
 	_, err := time.Parse("2006-01-02 15:04:05", rem.Time)
 	if err != nil {
-		log.Println("Was unable to parse date-time")
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "Couldn't understand the date-time you input. Please try again while ensuring in 'YYYY-MM-DD HH:MM:SS' format",
-				Flags:   discordgo.MessageFlagsEphemeral,
-			},
-		})
+		Respond(s, i, "Couldn't understand the date-time you input. Please try again while ensuring in 'YYYY-MM-DD HH:MM:SS' format")
 		return
 	}
 	rem.Message = options["message"].StringValue()
@@ -341,14 +244,7 @@ func SetAlarmHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	} else {
 		response = "Successfully added reminder to database"
 	}
-	log.Printf("Response: %s\n", response)
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: response,
-			Flags:   discordgo.MessageFlagsEphemeral,
-		},
-	})
+	Respond(s, i, response)
 }
 
 // Creates handlers for all slash commands based on relationship defined in commandHandlers

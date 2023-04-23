@@ -1,6 +1,9 @@
 package database
 
-import "time"
+import (
+	"math"
+	"time"
+)
 
 //https://gosamples.dev/sqlite-intro/
 
@@ -24,8 +27,10 @@ func (r *SQLiteRepository) Initialize() error {
 
 // Add reminder entry to DB
 func (r *SQLiteRepository) AddReminder(rem Reminder) error {
+	//No reminder should repeat more often than once a day
+	days := int64(math.Max(float64(rem.Days), 1.0))
 	M.Lock()
-	_, err := r.db.Exec("INSERT INTO reminders(guild, channel, user, days, message, repeat, time) values(?, ?, ?, ?, ?, ?, ?)", rem.Guild, rem.Channel, rem.User, rem.Days, rem.Message, rem.Repeat, rem.Time)
+	_, err := r.db.Exec("INSERT INTO reminders(guild, channel, user, days, message, repeat, time) values(?, ?, ?, ?, ?, ?, ?)", rem.Guild, rem.Channel, rem.User, days, rem.Message, rem.Repeat, rem.Time)
 	M.Unlock()
 	if err != nil {
 		return err

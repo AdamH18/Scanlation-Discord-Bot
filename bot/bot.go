@@ -54,6 +54,22 @@ func Start() {
 		registeredCommands[i] = cmd
 	}
 
+	log.Println("Removing unused commands...")
+	cmds, err := goBot.ApplicationCommands(BotId, "")
+	if err != nil {
+		log.Printf("Was unable to retrieve existing commands: %v\n", err)
+	} else {
+		for _, cmd := range cmds {
+			if !IsCommand(cmd.Name) {
+				log.Printf("Unused command %v found. Deleting...", cmd.Name)
+				err := goBot.ApplicationCommandDelete(BotId, "", cmd.ID)
+				if err != nil {
+					log.Printf("Cannot delete '%v' command: %v", cmd.Name, err)
+				}
+			}
+		}
+	}
+
 	//If every thing works fine we will be printing this.
 	log.Println("Bot is running!")
 
