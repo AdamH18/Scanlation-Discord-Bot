@@ -5,7 +5,7 @@ import "github.com/bwmarrin/discordgo"
 var (
 	adminPerms int64 = discordgo.PermissionAdministrator
 	dmPerms          = false
-	daysMin          = 1.0
+	daysMin          = 0.0
 	hourModMin       = -12.0
 
 	//Definitions for all slash commands and their expected parameters
