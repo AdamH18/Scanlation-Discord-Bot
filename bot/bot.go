@@ -9,10 +9,9 @@ import (
 )
 
 var (
-	BotId              string
-	goBot              *discordgo.Session
-	registeredCommands []*discordgo.ApplicationCommand
-	quit               chan struct{}
+	BotId string
+	goBot *discordgo.Session
+	quit  chan struct{}
 )
 
 func Start() {
@@ -44,28 +43,30 @@ func Start() {
 		return
 	}
 
+	//Get commands registed with Discord
+	cmds, err := goBot.ApplicationCommands(BotId, "")
+	if err != nil {
+		log.Panicf("Was unable to retrieve existing commands: %v\n", err)
+	}
+
 	log.Println("Adding commands...")
-	registeredCommands = make([]*discordgo.ApplicationCommand, len(commands))
-	for i, v := range commands {
-		cmd, err := goBot.ApplicationCommandCreate(BotId, "", v)
-		if err != nil {
-			log.Panicf("Cannot create '%v' command: %v", v.Name, err)
+	for _, v := range commands {
+		if !DiscordCommand(cmds, v.Name) || config.RefreshCommands {
+			_, err := goBot.ApplicationCommandCreate(BotId, "", v)
+			if err != nil {
+				log.Panicf("Cannot create '%v' command: %v", v.Name, err)
+			}
+			log.Printf("Command %s added successfully\n", v.Name)
 		}
-		registeredCommands[i] = cmd
 	}
 
 	log.Println("Removing unused commands...")
-	cmds, err := goBot.ApplicationCommands(BotId, "")
-	if err != nil {
-		log.Printf("Was unable to retrieve existing commands: %v\n", err)
-	} else {
-		for _, cmd := range cmds {
-			if !IsCommand(cmd.Name) {
-				log.Printf("Unused command %v found. Deleting...", cmd.Name)
-				err := goBot.ApplicationCommandDelete(BotId, "", cmd.ID)
-				if err != nil {
-					log.Printf("Cannot delete '%v' command: %v", cmd.Name, err)
-				}
+	for _, cmd := range cmds {
+		if !IsCommand(cmd.Name) {
+			log.Printf("Unused command %v found. Deleting...", cmd.Name)
+			err := goBot.ApplicationCommandDelete(BotId, "", cmd.ID)
+			if err != nil {
+				log.Printf("Cannot delete '%v' command: %v", cmd.Name, err)
 			}
 		}
 	}
@@ -88,7 +89,11 @@ func Stop() {
 
 	if config.RemoveCommands {
 		log.Println("Removing commands...")
-		for _, v := range registeredCommands {
+		cmds, err := goBot.ApplicationCommands(BotId, "")
+		if err != nil {
+			log.Printf("Was unable to retrieve existing commands: %v\n", err)
+		}
+		for _, v := range cmds {
 			err := goBot.ApplicationCommandDelete(BotId, "", v.ID)
 			if err != nil {
 				log.Panicf("Cannot delete '%v' command: %v", v.Name, err)

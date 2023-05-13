@@ -25,6 +25,7 @@ func NewSQLiteRepository(db *sql.DB) *SQLiteRepository {
 
 // DB initialization
 func StartDatabase(loc string) {
+	log.Println("Starting database...")
 	db, err := sql.Open("sqlite3", loc)
 	if err != nil {
 		log.Fatal(err)

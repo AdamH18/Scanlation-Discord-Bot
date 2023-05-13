@@ -17,3 +17,46 @@ type Reminder struct {
 func (r Reminder) String() string {
 	return fmt.Sprintf("%d;%s;%s;%s;%d;%s;%t;%s", r.ID, r.Guild, r.Channel, r.User, r.Days, r.Message, r.Repeat, r.Time)
 }
+
+type Series struct {
+	NameSh   string
+	NameFull string
+	Guild    string
+	PingRole string
+}
+
+type Channel struct {
+	Channel string
+	Series  string
+	Guild   string
+}
+
+type User struct {
+	User  string
+	Color string
+	Guild string
+}
+
+type Job struct {
+	JobSh   string
+	JobFull string
+	Guild   string
+}
+
+type MemberRole struct {
+	Guild string
+	Role  string
+}
+
+type SeriesChannels struct {
+	Top    string
+	Bottom string
+	Guild  string
+}
+
+type SeriesAssignment struct {
+	User   string
+	Series string
+	Job    string
+	Guild  string
+}
