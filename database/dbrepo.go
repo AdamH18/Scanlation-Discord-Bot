@@ -277,6 +277,23 @@ func (r *SQLiteRepository) RemoveAllAssignments(user string, guild string) (bool
 	return rows > 0, nil
 }
 
+// Update series name
+func (r *SQLiteRepository) UpdateSeriesName(nameSh string, newName string, guild string) (bool, error) {
+	M.Lock()
+	res, err := r.db.Exec("UPDATE series SET name_full = ? WHERE name_sh = ? AND guild = ?", newName, nameSh, guild)
+	M.Unlock()
+	if err != nil {
+		return false, err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return rows > 0, nil
+}
+
 // Update user's color to new one
 func (r *SQLiteRepository) UpdateColor(user string, color string, guild string) error {
 	M.Lock()

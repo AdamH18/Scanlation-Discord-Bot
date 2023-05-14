@@ -69,6 +69,8 @@ func BuildHelpEmbed() *discordgo.MessageEmbed {
 	return &embed
 }
 
+//TODO: Standardize ordering in these embeds
+
 // Builds the embed for showing series assignments
 func BuildSeriesAssignmentsEmbed(assMap map[string][]string, series string, guild string) (*discordgo.MessageEmbed, error) {
 	//Initialize embed

@@ -329,6 +329,27 @@ func RemoveSeriesHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	Respond(s, i, response)
 }
 
+// Handler for change_series_title
+func ChangeSeriesTitleHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "change_series_title")
+	options := OptionsToMap(i.ApplicationCommandData().Options)
+	nameSh := options["short-name"].StringValue()
+	nameFull := options["new-full-name"].StringValue()
+	log.Printf("Short-Name: %s New-Full-Name: %s", nameSh, nameFull)
+
+	//Removing series from DB
+	done, err := database.Repo.UpdateSeriesName(nameSh, nameFull, i.GuildID)
+	response := ""
+	if err != nil {
+		response = "Error changing series name: " + err.Error()
+	} else if !done {
+		response = "Could not locate series for name change"
+	} else {
+		response = "Successfully changed series name"
+	}
+	Respond(s, i, response)
+}
+
 // Handler for add_series_channel
 func AddSeriesChannelHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	LogCommand(i, "add_series_channel")

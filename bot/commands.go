@@ -258,6 +258,26 @@ var (
 			},
 		},
 		{
+			Name:                     "change_series_title",
+			Description:              "Changes the full name of the series. Shorthand name is unchanged (admin only)",
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &adminPerms,
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "short-name",
+					Description: "Shorthand name for the series (just to make sure)",
+					Required:    true,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "new-full-name",
+					Description: "New full name for the series",
+					Required:    true,
+				},
+			},
+		},
+		{
 			Name:                     "add_series_channel",
 			Description:              "Register a channel with a given series (contextual command, admin only)",
 			DMPermission:             &dmPerms,
@@ -676,6 +696,7 @@ var (
 
 		"add_series":            AddSeriesHandler,
 		"remove_series":         RemoveSeriesHandler,
+		"change_series_title":   ChangeSeriesTitleHandler,
 		"add_series_channel":    AddSeriesChannelHandler,
 		"remove_series_channel": RemoveSeriesChannelHandler,
 		"add_user":              AddUserHandler,
