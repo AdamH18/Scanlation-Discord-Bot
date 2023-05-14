@@ -574,9 +574,20 @@ func AddSeriesAssignmentHandler(s *discordgo.Session, i *discordgo.InteractionCr
 	sea.Guild = i.GuildID
 	options := OptionsToMap(i.ApplicationCommandData().Options)
 	sea.User = options["user"].UserValue(s).ID
-	sea.Series = options["series"].StringValue()
 	sea.Job = options["job"].StringValue()
-	log.Printf("User: %s Series: %s Job: %s", sea.User, sea.Series, sea.Job)
+	sea.Series = ""
+	if _, ok := options["series"]; ok {
+		sea.Series = options["series"].StringValue()
+	}
+	log.Printf("User: %s Job: %s Series: %s", sea.User, sea.Job, sea.Series)
+	var err error
+	if sea.Series == "" {
+		sea.Series, err = database.Repo.GetLocalSeries(i.ChannelID)
+		if err != nil {
+			Respond(s, i, "Unable to locate series for this command: "+err.Error())
+			return
+		}
+	}
 
 	//Check if user, series, and job exist
 	if !database.Repo.RegisteredUser(sea.User, sea.Guild) {
@@ -593,7 +604,7 @@ func AddSeriesAssignmentHandler(s *discordgo.Session, i *discordgo.InteractionCr
 	}
 
 	//Add assignment to DB
-	err := database.Repo.AddAssignment(sea)
+	err = database.Repo.AddAssignment(sea)
 	response := ""
 	if err != nil {
 		response = "Error adding assignment to database: " + err.Error()
