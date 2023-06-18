@@ -96,7 +96,11 @@ func BackupDB() {
 	toMidnight := time.NewTimer(n.Sub(t))
 
 	//At midnight run backup
-	<-toMidnight.C
+	select {
+	case <-quit:
+		return
+	case <-toMidnight.C:
+	}
 	DoBackup()
 
 	//Swap to 24 hour ticker afterwards
@@ -109,6 +113,51 @@ func BackupDB() {
 			return
 		case <-ticker.C:
 			DoBackup()
+		}
+	}
+}
+
+// Monitors channel for series billboard updates and updates them as requested
+func SeriesUpdates() {
+	var guild, series string
+	var vals func() (string, string)
+	for {
+		select {
+		case <-quit:
+			return
+		case vals = <-SeriesCh:
+			guild, series = vals()
+			if series == "" {
+				UpdateAllSeriesBillboards(guild)
+			} else {
+				UpdateSeriesBillboard(series, guild)
+			}
+		}
+	}
+}
+
+// Monitors channel for assignments billboard updates and updates them as requested
+func AssignmentsUpdates() {
+	var guild string
+	for {
+		select {
+		case <-quit:
+			return
+		case guild = <-AssignmentsCh:
+			UpdateAssignmentsBillboard(guild)
+		}
+	}
+}
+
+// Monitors channel for colors billboard updates and updates them as requested
+func ColorsUpdates() {
+	var guild string
+	for {
+		select {
+		case <-quit:
+			return
+		case guild = <-ColorsCh:
+			UpdateColorsBillboard(guild)
 		}
 	}
 }

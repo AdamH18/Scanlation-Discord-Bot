@@ -21,6 +21,7 @@ var tableQuerys = []string{
 		name_full VARCHAR(100) COLLATE NOCASE,
 		guild VARCHAR(20),
 		ping_role VARCHAR(20),
+		repo_link VARCHAR(100),
 		PRIMARY KEY(name_sh, guild)
     );
     `,
@@ -37,6 +38,7 @@ var tableQuerys = []string{
     CREATE TABLE IF NOT EXISTS users(
 		user VARCHAR(20),
 		color VARCHAR(6),
+		vanity_role VARCHAR(20),
 		guild VARCHAR(20),
 		PRIMARY KEY(user, guild)
     );
@@ -49,6 +51,14 @@ var tableQuerys = []string{
 		job VARCHAR(20) COLLATE NOCASE,
 		guild VARCHAR(20),
 		UNIQUE(user, series, job, guild)
+    );
+    `,
+	// Registers notes for series
+	`
+    CREATE TABLE IF NOT EXISTS series_notes(
+		series VARCHAR(100) COLLATE NOCASE,
+		note VARCHAR(1000),
+		guild VARCHAR(20)
     );
     `,
 	// Keeps track of all job types like TS, PR, and RD
@@ -75,18 +85,22 @@ var tableQuerys = []string{
 	// Message for series billboard
 	`CREATE TABLE IF NOT EXISTS series_billboards(
 		series VARCHAR(100) PRIMARY KEY COLLATE NOCASE,
-		guild VARCHAR(20)
+		guild VARCHAR(20),
+		channel VARCHAR(30),
+		message VARCHAR(30)
     );
     `,
 	// Message for roles billboard
 	`CREATE TABLE IF NOT EXISTS roles_billboards(
 		guild VARCHAR(20) PRIMARY KEY,
+		channel VARCHAR(30),
 		message VARCHAR(30)
     );
     `,
 	// Message for colors billboard
 	`CREATE TABLE IF NOT EXISTS colors_billboards(
 		guild VARCHAR(20) PRIMARY KEY,
+		channel VARCHAR(30),
 		message VARCHAR(30)
     );
     `,

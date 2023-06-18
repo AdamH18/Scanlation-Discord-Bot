@@ -9,8 +9,11 @@ import (
 )
 
 var (
-	Repo *SQLiteRepository
-	M    sync.Mutex
+	Repo          *SQLiteRepository
+	M             sync.Mutex
+	SeriesCh      chan func() (string, string)
+	AssignmentsCh chan string
+	ColorsCh      chan string
 )
 
 type SQLiteRepository struct {
@@ -36,4 +39,10 @@ func StartDatabase(loc string) {
 	if err := Repo.Initialize(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func RegisterChannels(serc chan func() (string, string), assc chan string, colc chan string) {
+	SeriesCh = serc
+	AssignmentsCh = assc
+	ColorsCh = colc
 }

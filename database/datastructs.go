@@ -23,6 +23,7 @@ type Series struct {
 	NameFull string
 	Guild    string
 	PingRole string
+	RepoLink string
 }
 
 type Channel struct {
@@ -32,9 +33,10 @@ type Channel struct {
 }
 
 type User struct {
-	User  string
-	Color string
-	Guild string
+	User       string
+	Color      string
+	VanityRole string
+	Guild      string
 }
 
 type Job struct {
@@ -59,4 +61,16 @@ type SeriesAssignment struct {
 	Series string
 	Job    string
 	Guild  string
+}
+
+type JobBB struct {
+	Guild   string
+	Channel string
+	Message string
+}
+
+type ColorBB struct {
+	Guild   string
+	Channel string
+	Message string
 }

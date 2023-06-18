@@ -4,6 +4,7 @@ import (
 	//to print errors
 	"log"
 	"scanlation-discord-bot/config" //importing our config package which we have created above
+	"scanlation-discord-bot/database"
 
 	"github.com/bwmarrin/discordgo" //discordgo package from the repo of bwmarrin .
 )
@@ -12,6 +13,10 @@ var (
 	BotId string
 	goBot *discordgo.Session
 	quit  chan struct{}
+
+	SeriesCh      chan func() (string, string)
+	AssignmentsCh chan string
+	ColorsCh      chan string
 )
 
 func Start() {
@@ -80,6 +85,15 @@ func Start() {
 	go CheckReminders()
 	log.Println("Starting backups")
 	go BackupDB()
+
+	//Create channels for billboard updates
+	SeriesCh = make(chan func() (string, string))
+	AssignmentsCh = make(chan string)
+	ColorsCh = make(chan string)
+	database.RegisterChannels(SeriesCh, AssignmentsCh, ColorsCh)
+	go SeriesUpdates()
+	go AssignmentsUpdates()
+	go ColorsUpdates()
 }
 
 func Stop() {

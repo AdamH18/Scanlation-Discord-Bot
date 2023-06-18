@@ -194,7 +194,7 @@ func CreateChannels(ser database.Series) error {
 		return err
 	}
 	genData := discordgo.GuildChannelCreateData{
-		Name:                 "general",
+		Name:                 ser.NameSh,
 		Type:                 discordgo.ChannelTypeGuildText,
 		Position:             2,
 		PermissionOverwrites: perms,
@@ -205,7 +205,7 @@ func CreateChannels(ser database.Series) error {
 		return err
 	}
 	prData := discordgo.GuildChannelCreateData{
-		Name:                 "pr",
+		Name:                 ser.NameSh + "-pr",
 		Type:                 discordgo.ChannelTypeGuildText,
 		Position:             3,
 		PermissionOverwrites: perms,
@@ -225,7 +225,7 @@ func CreateChannels(ser database.Series) error {
 		})
 	}
 	infData := discordgo.GuildChannelCreateData{
-		Name:                 "info",
+		Name:                 ser.NameSh + "-info",
 		Type:                 discordgo.ChannelTypeGuildText,
 		Position:             1,
 		PermissionOverwrites: perms,

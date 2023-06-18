@@ -235,6 +235,12 @@ var (
 					Description: "If full-create was not selected, include role for pinging on release here",
 					Required:    false,
 				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "repo-link",
+					Description: "Link to repo where series files can be found",
+					Required:    false,
+				},
 			},
 		},
 		{
@@ -266,13 +272,33 @@ var (
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
 					Name:        "short-name",
-					Description: "Shorthand name for the series (just to make sure)",
+					Description: "Shorthand name for the series",
 					Required:    true,
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
 					Name:        "new-full-name",
 					Description: "New full name for the series",
+					Required:    true,
+				},
+			},
+		},
+		{
+			Name:                     "change_series_repo",
+			Description:              "Changes the repo link of the series (admin only)",
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &adminPerms,
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "short-name",
+					Description: "Shorthand name for the series",
+					Required:    true,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "new-repo-link",
+					Description: "New repo link for the series",
 					Required:    true,
 				},
 			},
@@ -519,6 +545,19 @@ var (
 			},
 		},
 		{
+			Name:         "job_assignments",
+			Description:  "See everyone assigned to a given job",
+			DMPermission: &dmPerms,
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "job",
+					Description: "Job to check assignments for (shorthand)",
+					Required:    true,
+				},
+			},
+		},
+		{
 			Name:         "tl",
 			Description:  "Ping the translator(s) (contextual command)",
 			DMPermission: &dmPerms,
@@ -624,6 +663,36 @@ var (
 				},
 			},
 		},
+		{
+			Name:         "vanity_role",
+			Description:  "Give yourself a vanity role (or edit existing one)",
+			DMPermission: &dmPerms,
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "name",
+					Description: "Name of the role",
+					Required:    true,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "color",
+					Description: "Set role color in RGB hex. Must be exactly 6 characters and parseable",
+					Required:    true,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionUser,
+					Name:        "copy-user",
+					Description: "Take existing vanity role instead. Ignores first two parameters. Works even if at max roles",
+					Required:    false,
+				},
+			},
+		},
+		{
+			Name:         "rem_vanity_role",
+			Description:  "Removes your vanity role",
+			DMPermission: &dmPerms,
+		},
 
 		// BILLBOARD COMMANDS
 		{
@@ -678,6 +747,12 @@ var (
 			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &adminPerms,
 		},
+		{
+			Name:                     "refresh_all_billboards",
+			Description:              "Refreshes all billboards on the server (admin only)",
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &adminPerms,
+		},
 	}
 
 	//Map to link slash commands to their handler
@@ -697,6 +772,7 @@ var (
 		"add_series":            AddSeriesHandler,
 		"remove_series":         RemoveSeriesHandler,
 		"change_series_title":   ChangeSeriesTitleHandler,
+		"change_series_repo":    ChangeSeriesRepoHandler,
 		"add_series_channel":    AddSeriesChannelHandler,
 		"remove_series_channel": RemoveSeriesChannelHandler,
 		"add_user":              AddUserHandler,
@@ -714,6 +790,7 @@ var (
 		"series_assignments":       SeriesAssignmentsHandler,
 		"my_assignments":           MyAssignmentsHandler,
 		"user_assignments":         UserAssignmentsHandler,
+		"job_assignments":          JobAssignmentsHandler,
 		"tl":                       TLPingHandler,
 		"rd":                       RDPingHandler,
 		"ts":                       TSPingHandler,
@@ -721,14 +798,17 @@ var (
 
 		/*"my_settings":    MySettingsHandler,
 		"user_settings":  UserSettingsHandler,*/
-		"set_color":      SetColorHandler,
-		"set_user_color": SetUserColorHandler,
+		"set_color":       SetColorHandler,
+		"set_user_color":  SetUserColorHandler,
+		"vanity_role":     VanityRoleHandler,
+		"rem_vanity_role": RemVanityRoleHandler,
 
-		/*"create_series_billboard":      CreateSeriesBillboardHandler,
-		"delete_series_billboard":      DeleteSeriesBillboardHandler,
+		//"create_series_billboard":      CreateSeriesBillboardHandler,
+		//"delete_series_billboard":      DeleteSeriesBillboardHandler,
 		"create_assignments_billboard": CreateAssignmentsBillboardHandler,
 		"delete_assignments_billboard": DeleteAssignmentsBillboardHandler,
 		"create_colors_billboard":      CreateColorsBillboardHandler,
-		"delete_colors_billboard":      DeleteColorsBillboardHandler,*/
+		"delete_colors_billboard":      DeleteColorsBillboardHandler,
+		//"refresh_all_billboards":       RefreshAllBillboardsHandler,
 	}
 )

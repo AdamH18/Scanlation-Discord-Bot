@@ -4,6 +4,8 @@ import (
 	"log"
 	"scanlation-discord-bot/config"
 	"scanlation-discord-bot/database"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -267,8 +269,12 @@ func AddSeriesHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if _, ok := options["ping-role"]; ok {
 		ser.PingRole = options["ping-role"].RoleValue(s, i.GuildID).ID
 	}
+	ser.RepoLink = ""
+	if _, ok := options["repo-link"]; ok {
+		ser.RepoLink = options["repo-link"].StringValue()
+	}
 	fullCreate := options["full-create"].BoolValue()
-	log.Printf("Full-Name: %s Short-Name: %s Full-Create: %t Ping-Role: %s", ser.NameFull, ser.NameSh, fullCreate, ser.PingRole)
+	log.Printf("Full-Name: %s Short-Name: %s Full-Create: %t Ping-Role: %s Repo-Link: %s", ser.NameFull, ser.NameSh, fullCreate, ser.PingRole, ser.RepoLink)
 
 	//Adding series to DB
 	err := database.Repo.AddSeries(ser)
@@ -337,7 +343,7 @@ func ChangeSeriesTitleHandler(s *discordgo.Session, i *discordgo.InteractionCrea
 	nameFull := options["new-full-name"].StringValue()
 	log.Printf("Short-Name: %s New-Full-Name: %s", nameSh, nameFull)
 
-	//Removing series from DB
+	//Updating title
 	done, err := database.Repo.UpdateSeriesName(nameSh, nameFull, i.GuildID)
 	response := ""
 	if err != nil {
@@ -346,6 +352,27 @@ func ChangeSeriesTitleHandler(s *discordgo.Session, i *discordgo.InteractionCrea
 		response = "Could not locate series for name change"
 	} else {
 		response = "Successfully changed series name"
+	}
+	Respond(s, i, response)
+}
+
+// Handler for change_series_repo
+func ChangeSeriesRepoHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "change_series_repo")
+	options := OptionsToMap(i.ApplicationCommandData().Options)
+	nameSh := options["short-name"].StringValue()
+	repoLink := options["new-repo-link"].StringValue()
+	log.Printf("Short-Name: %s New-Repo-Link: %s", nameSh, repoLink)
+
+	//Updating link
+	done, err := database.Repo.UpdateSeriesRepoLink(nameSh, repoLink, i.GuildID)
+	response := ""
+	if err != nil {
+		response = "Error changing series link: " + err.Error()
+	} else if !done {
+		response = "Could not locate series for link change"
+	} else {
+		response = "Successfully changed series link"
 	}
 	Respond(s, i, response)
 }
@@ -402,6 +429,7 @@ func AddUserHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	var usr database.User
 	usr.Guild = i.GuildID
 	usr.Color = ""
+	usr.VanityRole = ""
 	options := OptionsToMap(i.ApplicationCommandData().Options)
 	usr.User = options["user"].UserValue(s).ID
 	log.Printf("User: %s", usr.User)
@@ -748,6 +776,30 @@ func UserAssignmentsHandler(s *discordgo.Session, i *discordgo.InteractionCreate
 	RespondEmbed(s, i, embed)
 }
 
+// Handler for job_assignments
+func JobAssignmentsHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "job_assignments")
+	options := OptionsToMap(i.ApplicationCommandData().Options)
+	job := options["job"].StringValue()
+	log.Printf("Job: %s", job)
+
+	//Get all job assignments
+	assMap, err := database.Repo.GetJobAssignments(job, i.GuildID)
+	if err != nil {
+		Respond(s, i, "Unable to get user assignments: "+err.Error())
+		return
+	} else if len(assMap) == 0 {
+		Respond(s, i, "No users found assigned to that job")
+		return
+	}
+	embed, err := BuildJobAssignmentsEmbed(assMap, job, i.GuildID)
+	if err != nil {
+		Respond(s, i, "Failed to build embed: "+err.Error())
+		return
+	}
+	RespondEmbed(s, i, embed)
+}
+
 // Pings the given job with a provided message
 func JobPinger(job string, s *discordgo.Session, i *discordgo.InteractionCreate) {
 	options := OptionsToMap(i.ApplicationCommandData().Options)
@@ -769,7 +821,7 @@ func JobPinger(job string, s *discordgo.Session, i *discordgo.InteractionCreate)
 		return
 	}
 	if len(users) == 0 {
-		Respond(s, i, "No users assigned to this role for this series")
+		Respond(s, i, "No users assigned to this job for this series")
 		return
 	}
 
@@ -847,6 +899,294 @@ func SetUserColorHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		response = "Error updating color: " + err.Error()
 	} else {
 		response = "Successfully updated user's credits color"
+	}
+	Respond(s, i, response)
+}
+
+// Handler for vanity_role
+func VanityRoleHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "vanity_role")
+	options := OptionsToMap(i.ApplicationCommandData().Options)
+	name := options["name"].StringValue()
+	color := options["color"].StringValue()
+	user := ""
+	if _, ok := options["copy-user"]; ok {
+		user = options["copy-user"].UserValue(s).ID
+	}
+	log.Printf("Name: %s Color: %s Copy-User: %s", name, color, user)
+
+	//If user was set, just give same role (if specified user has one)
+	var err error
+	if user != "" {
+		roleId, err := database.Repo.GetUserVanityRole(user, i.GuildID)
+		response := ""
+		if err != nil {
+			response = "Error getting role from user: " + err.Error()
+		} else if roleId == "" {
+			response = "User does not have a vanity role"
+		} else {
+			err = s.GuildMemberRoleAdd(i.GuildID, i.Member.User.ID, roleId)
+			if err != nil {
+				response = "Error adding vanity role:" + err.Error()
+			} else {
+				response = "Successfully added vanity role"
+			}
+		}
+		Respond(s, i, response)
+		return
+	}
+
+	//Now that it's determined the field will be used, parse color
+	color = strings.TrimSpace(color)
+	if len(color) != 6 {
+		Respond(s, i, "Color is not right length")
+		return
+	}
+	colorInt64, err := strconv.ParseInt(color, 16, 64)
+	if err != nil {
+		Respond(s, i, "Error parsing color: "+err.Error())
+		return
+	}
+	colorInt := int(colorInt64)
+
+	//Check if existing vanity role can just be updated
+	usrRole, err := database.Repo.GetUserVanityRole(i.Member.User.ID, i.GuildID)
+	if err != nil {
+		Respond(s, i, "Error getting roles from database: "+err.Error())
+		return
+	}
+	if usrRole != "" {
+		num, err := database.Repo.NumUsersWithVanity(usrRole, i.GuildID)
+		if err != nil {
+			Respond(s, i, "Error getting roles count from database: "+err.Error())
+			return
+		}
+		//If user running command is only one with role, edit it
+		if num == 1 {
+			falseVar := false
+			role := discordgo.RoleParams{
+				Name:        name,
+				Color:       &colorInt,
+				Hoist:       &falseVar,
+				Mentionable: &falseVar,
+			}
+			_, err = s.GuildRoleEdit(i.GuildID, usrRole, &role)
+			response := ""
+			if err != nil {
+				response = "Error editing role: " + err.Error()
+			} else {
+				response = "Successfully edited role to new specs"
+			}
+			Respond(s, i, response)
+			return
+		}
+	}
+
+	//If new role needs to be created, make sure server has space for it
+	roles, err := s.GuildRoles(i.GuildID)
+	if err != nil {
+		Respond(s, i, "Unable to check server roles: "+err.Error())
+		return
+	} else if len(roles) > 240 {
+		Respond(s, i, "Too few role slots left in server to make new role")
+		return
+	}
+
+	//If making new role and user has a current role, remove it. Ignore if fails
+	if usrRole != "" {
+		err = s.GuildMemberRoleRemove(i.GuildID, i.Member.User.ID, usrRole)
+		if err != nil {
+			log.Println("Error removing old vanity role: " + err.Error())
+		}
+	}
+
+	//Make and give new role
+	falseVar := false
+	roleP := discordgo.RoleParams{
+		Name:        name,
+		Color:       &colorInt,
+		Hoist:       &falseVar,
+		Mentionable: &falseVar,
+	}
+	role, err := s.GuildRoleCreate(i.GuildID, &roleP)
+	if err != nil {
+		Respond(s, i, "Error creating new role: "+err.Error())
+		return
+	}
+	err = s.GuildMemberRoleAdd(i.GuildID, i.Member.User.ID, role.ID)
+	if err != nil {
+		Respond(s, i, "Error giving new role: "+err.Error())
+		return
+	}
+	//Register new role in database
+	err = database.Repo.UpdateVanityRole(i.Member.User.ID, role.ID, i.GuildID)
+	if err != nil {
+		Respond(s, i, "Error adding new role to database: "+err.Error())
+		return
+	}
+	Respond(s, i, "Successfully created and gave new vanity role")
+}
+
+// Handler for rem_vanity_role
+func RemVanityRoleHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "rem_vanity_role")
+
+	usrRole, err := database.Repo.GetUserVanityRole(i.Member.User.ID, i.GuildID)
+	if err != nil {
+		Respond(s, i, "Error getting roles from database: "+err.Error())
+		return
+	} else if usrRole == "" {
+		Respond(s, i, "No vanity role to remove")
+		return
+	}
+
+	//Remove role in Discord
+	err = s.GuildMemberRoleRemove(i.GuildID, i.Member.User.ID, usrRole)
+	if err != nil {
+		Respond(s, i, "Error removing role: "+err.Error())
+		return
+	}
+	//Update database
+	err = database.Repo.UpdateVanityRole(i.Member.User.ID, "", i.GuildID)
+	response := ""
+	if err != nil {
+		response = "Error updating database: " + err.Error()
+	} else {
+		response = "Successfully removed role"
+	}
+	Respond(s, i, response)
+}
+
+// Handler for create_assignments_billboard
+func CreateAssignmentsBillboardHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "create_assignments_billboard")
+
+	bill, _, err := database.Repo.GetRolesBillboard(i.GuildID)
+	if err != nil {
+		Respond(s, i, "Error getting existing billboard info: "+err.Error())
+		return
+	} else if bill != "" {
+		Respond(s, i, "Server already has an assignments billboard. Please remove the existing one first")
+		return
+	}
+
+	//Billboard should be created, so gather data
+	assMap, err := database.Repo.GetAllAssignments(i.GuildID)
+	if err != nil {
+		Respond(s, i, "Error getting server assignments info: "+err.Error())
+		return
+	}
+
+	embed, err := BuildFullAssignmentsEmbed(assMap, i.GuildID)
+	if err != nil {
+		Respond(s, i, "Error building embed: "+err.Error())
+		return
+	}
+
+	message := discordgo.MessageSend{
+		Embeds: []*discordgo.MessageEmbed{embed},
+	}
+	msg, err := s.ChannelMessageSendComplex(i.ChannelID, &message)
+	if err != nil {
+		Respond(s, i, "Error sending message: "+err.Error())
+		return
+	}
+
+	bb := database.JobBB{
+		Guild:   i.GuildID,
+		Channel: i.ChannelID,
+		Message: msg.ID,
+	}
+	err = database.Repo.AddRolesBillboard(bb)
+	response := ""
+	if err != nil {
+		response = "Error updating database: " + err.Error()
+	} else {
+		response = "Successfully created assignments billboard"
+	}
+	Respond(s, i, response)
+}
+
+// Handler for delete_assignments_billboard
+func DeleteAssignmentsBillboardHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "delete_assignments_billboard")
+
+	//Removing roles billboard from DB
+	done, err := database.Repo.RemoveRolesBillboard(i.GuildID)
+	response := ""
+	if err != nil {
+		response = "Error removing billboard from database: " + err.Error()
+	} else if !done {
+		response = "Could not locate billboard for removal"
+	} else {
+		response = "Successfully removed billboard from database"
+	}
+	Respond(s, i, response)
+}
+
+// Handler for create_colors_billboard
+func CreateColorsBillboardHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "create_colors_billboard")
+
+	bill, _, err := database.Repo.GetColorsBillboard(i.GuildID)
+	if err != nil {
+		Respond(s, i, "Error getting existing billboard info: "+err.Error())
+		return
+	} else if bill != "" {
+		Respond(s, i, "Server already has a colors billboard. Please remove the existing one first")
+		return
+	}
+
+	//Billboard should be created, so gather data
+	assMap, err := database.Repo.GetAllColors(i.GuildID)
+	if err != nil {
+		Respond(s, i, "Error getting user color info: "+err.Error())
+		return
+	}
+
+	embed, err := BuildColorsEmbed(assMap, i.GuildID)
+	if err != nil {
+		Respond(s, i, "Error building embed: "+err.Error())
+		return
+	}
+
+	message := discordgo.MessageSend{
+		Embeds: []*discordgo.MessageEmbed{embed},
+	}
+	msg, err := s.ChannelMessageSendComplex(i.ChannelID, &message)
+	if err != nil {
+		Respond(s, i, "Error sending message: "+err.Error())
+		return
+	}
+
+	bb := database.ColorBB{
+		Guild:   i.GuildID,
+		Channel: i.ChannelID,
+		Message: msg.ID,
+	}
+	err = database.Repo.AddColorsBillboard(bb)
+	response := ""
+	if err != nil {
+		response = "Error updating database: " + err.Error()
+	} else {
+		response = "Successfully created colors billboard"
+	}
+	Respond(s, i, response)
+}
+
+// Handler for delete_colors_billboard
+func DeleteColorsBillboardHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "delete_colors_billboard")
+
+	//Removing roles billboard from DB
+	done, err := database.Repo.RemoveColorsBillboard(i.GuildID)
+	response := ""
+	if err != nil {
+		response = "Error removing billboard from database: " + err.Error()
+	} else if !done {
+		response = "Could not locate billboard for removal"
+	} else {
+		response = "Successfully removed billboard from database"
 	}
 	Respond(s, i, response)
 }
