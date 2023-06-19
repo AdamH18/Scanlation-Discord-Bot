@@ -128,9 +128,9 @@ func SeriesUpdates() {
 		case vals = <-SeriesCh:
 			guild, series = vals()
 			if series == "" {
-				UpdateAllSeriesBillboards(guild)
+				go UpdateAllSeriesBillboards(guild)
 			} else {
-				UpdateSeriesBillboard(series, guild)
+				go UpdateSeriesBillboard(series, guild)
 			}
 		}
 	}
@@ -144,7 +144,7 @@ func AssignmentsUpdates() {
 		case <-quit:
 			return
 		case guild = <-AssignmentsCh:
-			UpdateAssignmentsBillboard(guild)
+			go UpdateAssignmentsBillboard(guild)
 		}
 	}
 }
@@ -157,7 +157,7 @@ func ColorsUpdates() {
 		case <-quit:
 			return
 		case guild = <-ColorsCh:
-			UpdateColorsBillboard(guild)
+			go UpdateColorsBillboard(guild)
 		}
 	}
 }
