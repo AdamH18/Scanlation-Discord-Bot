@@ -930,6 +930,10 @@ func VanityRoleHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				response = "Error adding vanity role:" + err.Error()
 			} else {
 				response = "Successfully added vanity role"
+				err = database.Repo.UpdateVanityRole(i.Member.User.ID, roleId, i.GuildID)
+				if err != nil {
+					log.Println("Error recording role assignment in database: " + err.Error())
+				}
 			}
 		}
 		Respond(s, i, response)

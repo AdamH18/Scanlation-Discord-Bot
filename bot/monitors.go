@@ -117,8 +117,8 @@ func BackupDB() {
 	}
 }
 
-// Monitors channel for series billboard updates and updates them as requested
-func SeriesUpdates() {
+// Monitors all billboard channels and updates them as requested
+func BillboardUpdates() {
 	var guild, series string
 	var vals func() (string, string)
 	for {
@@ -132,30 +132,8 @@ func SeriesUpdates() {
 			} else {
 				go UpdateSeriesBillboard(series, guild)
 			}
-		}
-	}
-}
-
-// Monitors channel for assignments billboard updates and updates them as requested
-func AssignmentsUpdates() {
-	var guild string
-	for {
-		select {
-		case <-quit:
-			return
 		case guild = <-AssignmentsCh:
 			go UpdateAssignmentsBillboard(guild)
-		}
-	}
-}
-
-// Monitors channel for colors billboard updates and updates them as requested
-func ColorsUpdates() {
-	var guild string
-	for {
-		select {
-		case <-quit:
-			return
 		case guild = <-ColorsCh:
 			go UpdateColorsBillboard(guild)
 		}

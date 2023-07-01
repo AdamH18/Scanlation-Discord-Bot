@@ -91,9 +91,7 @@ func Start() {
 	AssignmentsCh = make(chan string)
 	ColorsCh = make(chan string)
 	database.RegisterChannels(SeriesCh, AssignmentsCh, ColorsCh)
-	go SeriesUpdates()
-	go AssignmentsUpdates()
-	go ColorsUpdates()
+	go BillboardUpdates()
 }
 
 func Stop() {
