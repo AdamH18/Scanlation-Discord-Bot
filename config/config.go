@@ -10,7 +10,6 @@ import (
 var (
 	Token                 string //To store value of Token
 	RemoveCommands        bool   //Choose whether or not to remove registered slash commands from Discord upon shutdown
-	RefreshCommands       bool   //Choose whether or not to reregister all slash commands to Discord upon startup
 	DatabaseFile          string //Location of database file for bot to use
 	DatabaseBackupChannel string //Discord channel on which to dump DB backups
 	Owner                 string //User ID of bot owner
@@ -21,7 +20,6 @@ var (
 type configStruct struct {
 	Token                 string `json: "Token"`
 	RemoveCommands        string `json: "RemoveCommands"`
-	RefreshCommands       string `json: "RefreshCommands"`
 	DatabaseFile          string `json: "DatabaseFile"`
 	DatabaseBackupChannel string `json: "DatabaseBackupChannel`
 	Owner                 string `json: "Owner"`
@@ -49,7 +47,6 @@ func ReadConfig() error {
 	// After storing value in config variable we will access it and storing it in our declared variables .
 	Token = config.Token
 	RemoveCommands, _ = strconv.ParseBool(config.RemoveCommands)
-	RefreshCommands, _ = strconv.ParseBool(config.RefreshCommands)
 	DatabaseFile = config.DatabaseFile
 	DatabaseBackupChannel = config.DatabaseBackupChannel
 	Owner = config.Owner

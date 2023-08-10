@@ -99,7 +99,7 @@ func RemAnyReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate)
 	remID := options["id"].IntValue()
 	log.Printf("ID: %d", remID)
 	//Send to DB for removal
-	rows, err := database.Repo.RemoveReminder(remID)
+	rows, err := database.Repo.RemoveReminder(remID, i.GuildID)
 	response := ""
 	if err != nil {
 		response = "Error removing reminder from database: " + err.Error()
@@ -119,7 +119,7 @@ func RemReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	remID := options["id"].IntValue()
 	log.Printf("ID: %d", remID)
 	//Send to DB for removal
-	rows, err := database.Repo.RemoveUserReminder(remID, i.Member.User.ID)
+	rows, err := database.Repo.RemoveUserReminder(remID, i.Member.User.ID, i.GuildID)
 	response := ""
 	if err != nil {
 		response = "Error removing reminder from database: " + err.Error()
@@ -135,7 +135,7 @@ func RemReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 func MyRemindersHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	LogCommand(i, "my_reminders")
 	//Send user ID to DB to find corresponding reminders
-	rems, err := database.Repo.GetUserReminders(i.Member.User.ID)
+	rems, err := database.Repo.GetUserReminders(i.Member.User.ID, i.GuildID)
 	response := ""
 	if err != nil {
 		response = "Error getting reminders from database: " + err.Error()
@@ -153,7 +153,7 @@ func UserRemindersHandler(s *discordgo.Session, i *discordgo.InteractionCreate) 
 	userID := options["user"].UserValue(s).ID
 	log.Printf("User: %s", userID)
 	//Send user ID to DB to find corresponding reminders
-	rems, err := database.Repo.GetUserReminders(userID)
+	rems, err := database.Repo.GetUserReminders(userID, i.GuildID)
 	response := ""
 	if err != nil {
 		response = "Error getting reminders from database: " + err.Error()
@@ -168,7 +168,7 @@ func UserRemindersHandler(s *discordgo.Session, i *discordgo.InteractionCreate) 
 func AllRemindersHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	LogCommand(i, "all_reminders")
 	//Send query to DB
-	rems, err := database.Repo.GetAllReminders()
+	rems, err := database.Repo.GetAllReminders(i.GuildID)
 	response := ""
 	if err != nil {
 		response = "Error getting reminders from database: " + err.Error()

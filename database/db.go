@@ -9,7 +9,8 @@ import (
 )
 
 var (
-	Repo          *SQLiteRepository
+	Repo *SQLiteRepository
+	//TODO: See if _mutex=full means I can get rid of this mutex
 	M             sync.Mutex
 	SeriesCh      chan func() (string, string)
 	AssignmentsCh chan string
@@ -29,7 +30,9 @@ func NewSQLiteRepository(db *sql.DB) *SQLiteRepository {
 // DB initialization
 func StartDatabase(loc string) {
 	log.Println("Starting database...")
-	db, err := sql.Open("sqlite3", loc)
+	// Database locking error fix from API spec
+	db, err := sql.Open("sqlite3", "file:"+loc+"?cache=shared&_mutex=full")
+	db.SetMaxOpenConns(1)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -145,9 +145,9 @@ func (r *SQLiteRepository) AddAssignment(sea SeriesAssignment) error {
 }
 
 // Remove reminder entry by ID
-func (r *SQLiteRepository) RemoveReminder(id int64) (int64, error) {
+func (r *SQLiteRepository) RemoveReminder(id int64, guild string) (int64, error) {
 	M.Lock()
-	res, err := r.RemindersExec("DELETE FROM reminders WHERE ROWID = ?", id)
+	res, err := r.RemindersExec("DELETE FROM reminders WHERE ROWID = ? AND guild = ?", id, guild)
 	M.Unlock()
 	if err != nil {
 		return 0, err
@@ -426,9 +426,9 @@ func (r *SQLiteRepository) ResetReminder(id int64) error {
 }
 
 // Remove reminder entry only if it belongs to specified user
-func (r *SQLiteRepository) RemoveUserReminder(id int64, userID string) (int64, error) {
+func (r *SQLiteRepository) RemoveUserReminder(id int64, userID string, guild string) (int64, error) {
 	M.Lock()
-	res, err := r.RemindersExec("DELETE FROM reminders WHERE ROWID = ? AND user = ?", id, userID)
+	res, err := r.RemindersExec("DELETE FROM reminders WHERE ROWID = ? AND user = ? AND guild = ?", id, userID, guild)
 	M.Unlock()
 	if err != nil {
 		return 0, err
@@ -443,9 +443,9 @@ func (r *SQLiteRepository) RemoveUserReminder(id int64, userID string) (int64, e
 }
 
 // Return all reminders belonging to a specific user
-func (r *SQLiteRepository) GetUserReminders(userID string) ([]Reminder, error) {
+func (r *SQLiteRepository) GetUserReminders(userID string, guild string) ([]Reminder, error) {
 	M.Lock()
-	res, err := r.db.Query("SELECT ROWID, * FROM reminders WHERE user = ?", userID)
+	res, err := r.db.Query("SELECT ROWID, * FROM reminders WHERE user = ? AND guild = ?", userID, guild)
 	M.Unlock()
 	if err != nil {
 		return nil, err
@@ -464,9 +464,9 @@ func (r *SQLiteRepository) GetUserReminders(userID string) ([]Reminder, error) {
 }
 
 // Return all reminders
-func (r *SQLiteRepository) GetAllReminders() ([]Reminder, error) {
+func (r *SQLiteRepository) GetAllReminders(guild string) ([]Reminder, error) {
 	M.Lock()
-	res, err := r.db.Query("SELECT ROWID, * FROM reminders")
+	res, err := r.db.Query("SELECT ROWID, * FROM reminders WHERE guild = ?", guild)
 	M.Unlock()
 	if err != nil {
 		return nil, err

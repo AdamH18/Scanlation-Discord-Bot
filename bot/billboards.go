@@ -21,6 +21,7 @@ func UpdateAssignmentsBillboard(guild string) {
 	bill, channel, err := database.Repo.GetRolesBillboard(guild)
 	if err != nil {
 		log.Println("Error getting billboard message: " + err.Error())
+		return
 	} else if bill == "" {
 		log.Println("Server does not have an assignments billboard")
 		return
@@ -56,6 +57,7 @@ func UpdateColorsBillboard(guild string) {
 	bill, channel, err := database.Repo.GetColorsBillboard(guild)
 	if err != nil {
 		log.Println("Error getting billboard message: " + err.Error())
+		return
 	} else if bill == "" {
 		log.Println("Server does not have a colors billboard")
 		return

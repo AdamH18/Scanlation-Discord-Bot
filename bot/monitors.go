@@ -17,15 +17,14 @@ func SendReminder(rem database.Reminder) error {
 		return err
 	}
 
-	message := fmt.Sprintf("Reminder for %s: %s\n\n", ping, rem.Message)
+	message := fmt.Sprintf("Reminder for %s: %s", ping, rem.Message)
 	if rem.Repeat {
 		//If supposed to repeat, add defined number of days to DB time for next reminder
-		message = message + fmt.Sprintf("Message is set to repeat. If no longer needed, delete using ID %d", rem.ID)
+		message = message + fmt.Sprintf("\n\nMessage is set to repeat. If no longer needed, delete using ID %d", rem.ID)
 		err = database.Repo.ResetReminder(int64(rem.ID))
 	} else {
 		//If not supposed to repeat, just delete
-		message = message + "Message is not set to repeat. Removing from database"
-		_, err = database.Repo.RemoveReminder(int64(rem.ID))
+		_, err = database.Repo.RemoveReminder(int64(rem.ID), rem.Guild)
 	}
 	if err != nil {
 		return err

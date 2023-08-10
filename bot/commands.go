@@ -759,6 +759,8 @@ var (
 	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
 		"help": HelpHandler,
 
+		//TODO: Investigate autocomplete - https://github.com/bwmarrin/discordgo/blob/master/examples/autocomplete/main.go
+
 		"add_any_reminder": AddAnyReminderHandler,
 		"add_reminder":     AddReminderHandler,
 		"rem_any_reminder": RemAnyReminderHandler,

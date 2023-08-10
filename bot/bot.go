@@ -48,32 +48,12 @@ func Start() {
 		return
 	}
 
-	//Get commands registed with Discord
-	cmds, err := goBot.ApplicationCommands(BotId, "")
-	if err != nil {
-		log.Panicf("Was unable to retrieve existing commands: %v\n", err)
-	}
-
 	log.Println("Adding commands...")
-	for _, v := range commands {
-		if !DiscordCommand(cmds, v.Name) || config.RefreshCommands {
-			_, err := goBot.ApplicationCommandCreate(BotId, "", v)
-			if err != nil {
-				log.Panicf("Cannot create '%v' command: %v", v.Name, err)
-			}
-			log.Printf("Command %s added successfully\n", v.Name)
-		}
-	}
-
-	log.Println("Removing unused commands...")
-	for _, cmd := range cmds {
-		if !IsCommand(cmd.Name) {
-			log.Printf("Unused command %v found. Deleting...", cmd.Name)
-			err := goBot.ApplicationCommandDelete(BotId, "", cmd.ID)
-			if err != nil {
-				log.Printf("Cannot delete '%v' command: %v", cmd.Name, err)
-			}
-		}
+	//Handles all command additions and deletions in a single function. Why wasn't I using this from the start?
+	_, err = goBot.ApplicationCommandBulkOverwrite(BotId, "", commands)
+	if err != nil {
+		log.Println("Failed to load application commands: " + err.Error())
+		return
 	}
 
 	//If every thing works fine we will be printing this.
@@ -101,15 +81,9 @@ func Stop() {
 
 	if config.RemoveCommands {
 		log.Println("Removing commands...")
-		cmds, err := goBot.ApplicationCommands(BotId, "")
+		_, err := goBot.ApplicationCommandBulkOverwrite(BotId, "", []*discordgo.ApplicationCommand{})
 		if err != nil {
-			log.Printf("Was unable to retrieve existing commands: %v\n", err)
-		}
-		for _, v := range cmds {
-			err := goBot.ApplicationCommandDelete(BotId, "", v.ID)
-			if err != nil {
-				log.Panicf("Cannot delete '%v' command: %v", v.Name, err)
-			}
+			log.Println("Failed to remove commands: " + err.Error())
 		}
 	}
 }

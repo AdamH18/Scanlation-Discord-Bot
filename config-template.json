@@ -1,7 +1,6 @@
 {
     "Token" : "token",
     "RemoveCommands" : "False",
-    "RefreshCommands" : "False",
     "DatabaseFile" : "sqlite.db",
     "DatabaseBackupChannel" : "ChannelID",
     "Owner" : "OwnerID"
