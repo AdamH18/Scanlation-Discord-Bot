@@ -801,6 +801,7 @@ var (
 		//"admin_help": AdminHelpHandler,
 
 		//TODO: Investigate autocomplete - https://github.com/bwmarrin/discordgo/blob/master/examples/autocomplete/main.go
+		//TODO: Organize by subcommands
 
 		"add_any_reminder": AddAnyReminderHandler,
 		"add_reminder":     AddReminderHandler,

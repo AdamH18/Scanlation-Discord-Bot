@@ -56,6 +56,8 @@ func Start() {
 		return
 	}
 
+	InitializeCache()
+
 	//If every thing works fine we will be printing this.
 	log.Println("Bot is running!")
 

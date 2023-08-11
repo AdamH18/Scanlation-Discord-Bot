@@ -19,47 +19,6 @@ func OptionsToMap(options []*discordgo.ApplicationCommandInteractionDataOption) 
 	return optionMap
 }
 
-// Takes a user ID and returns the username
-func GetUserName(guildID string, userID string) (string, error) {
-	usr, err := goBot.GuildMember(guildID, userID)
-	if err != nil {
-		return "", err
-	}
-	return usr.User.Username, nil
-}
-
-// Takes a user ID and returns a ping string
-func GetUserPing(guildID string, userID string) (string, error) {
-	usr, err := goBot.GuildMember(guildID, userID)
-	if err != nil {
-		return "", err
-	}
-	return usr.Mention(), nil
-}
-
-// Takes a role ID and returns a ping string
-func GetRolePing(guildID string, roleID string) (string, error) {
-	roles, err := goBot.GuildRoles(guildID)
-	if err != nil {
-		return "", err
-	}
-	for _, role := range roles {
-		if role.ID == roleID {
-			return role.Mention(), nil
-		}
-	}
-	return "", errors.New("role not found")
-}
-
-// Takes a channel ID and returns a ping string
-func GetChannelPing(channelID string) (string, error) {
-	channel, err := goBot.Channel(channelID)
-	if err != nil {
-		return "", err
-	}
-	return channel.Mention(), nil
-}
-
 // Handles response to a slash command
 func Respond(s *discordgo.Session, i *discordgo.InteractionCreate, response string) {
 	log.Printf("Response: %s\n", response)
