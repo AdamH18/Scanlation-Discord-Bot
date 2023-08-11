@@ -172,3 +172,7 @@ func (r *SQLiteRepository) RolesBillboardsExec(query string, args ...any) (sql.R
 func (r *SQLiteRepository) ColorsBillboardsExec(query string, args ...any) (sql.Result, error) {
 	return r.db.Exec(query, args...)
 }
+
+func (r *SQLiteRepository) NotificationChannelsExec(query string, args ...any) (sql.Result, error) {
+	return r.db.Exec(query, args...)
+}

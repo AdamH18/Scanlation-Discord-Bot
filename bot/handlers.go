@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"fmt"
 	"log"
 	"scanlation-discord-bot/config"
 	"scanlation-discord-bot/database"
@@ -335,6 +336,18 @@ func RemoveSeriesHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	Respond(s, i, response)
 }
 
+// Handler for server_series
+func ServerSeriesHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "server_series")
+
+	embed, err := BuildServerSeriesEmbed(i.GuildID)
+	if err != nil {
+		Respond(s, i, "Failed to build embed: "+err.Error())
+		return
+	}
+	RespondEmbed(s, i, embed)
+}
+
 // Handler for change_series_title
 func ChangeSeriesTitleHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	LogCommand(i, "change_series_title")
@@ -487,6 +500,18 @@ func RemoveUserHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	Respond(s, i, response)
 }
 
+// Handler for server_users
+func ServerUsersHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "server_users")
+
+	embed, err := BuildServerUsersEmbed(i.GuildID)
+	if err != nil {
+		Respond(s, i, "Failed to build embed: "+err.Error())
+		return
+	}
+	RespondEmbed(s, i, embed)
+}
+
 // Handler for add_job
 func AddJobHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	LogCommand(i, "add_job")
@@ -553,6 +578,18 @@ func RemoveJobHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		response = "Successfully removed job and all references from databases"
 	}
 	Respond(s, i, response)
+}
+
+// Handler for server_jobs
+func ServerJobsHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "server_jobs")
+
+	embed, err := BuildServerJobsEmbed(i.GuildID)
+	if err != nil {
+		Respond(s, i, "Failed to build embed: "+err.Error())
+		return
+	}
+	RespondEmbed(s, i, embed)
 }
 
 // Handler for add_member_role
@@ -668,9 +705,20 @@ func RemoveSeriesAssignmentHandler(s *discordgo.Session, i *discordgo.Interactio
 	LogCommand(i, "remove_series_assignment")
 	options := OptionsToMap(i.ApplicationCommandData().Options)
 	user := options["user"].UserValue(s).ID
-	series := options["series"].StringValue()
 	job := options["job"].StringValue()
+	series := ""
+	if _, ok := options["series"]; ok {
+		series = options["series"].StringValue()
+	}
 	log.Printf("User: %s Series: %s Job: %s", user, series, job)
+	var err error
+	if series == "" {
+		series, err = database.Repo.GetLocalSeries(i.ChannelID)
+		if err != nil {
+			Respond(s, i, "Unable to locate series for this command: "+err.Error())
+			return
+		}
+	}
 
 	//Removing assignemnt from DB
 	done, err := database.Repo.RemoveSeriesAssignment(user, series, job, i.GuildID)
@@ -865,6 +913,33 @@ func PRPingHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	JobPinger("pr", s, i)
 }
 
+// Handler for my_settings
+func MySettingsHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "my_settings")
+
+	embed, err := BuildUserSettingsEmbed(i.Member.User.ID, i.GuildID)
+	if err != nil {
+		Respond(s, i, "Failed to build embed: "+err.Error())
+		return
+	}
+	RespondEmbed(s, i, embed)
+}
+
+// Handler for user_settings
+func UserSettingsHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "user_settings")
+	options := OptionsToMap(i.ApplicationCommandData().Options)
+	user := options["user"].UserValue(s).ID
+	log.Printf("User: %s", user)
+
+	embed, err := BuildUserSettingsEmbed(user, i.GuildID)
+	if err != nil {
+		Respond(s, i, "Failed to build embed: "+err.Error())
+		return
+	}
+	RespondEmbed(s, i, embed)
+}
+
 // Handler for set_color
 func SetColorHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	LogCommand(i, "set_color")
@@ -977,12 +1052,12 @@ func VanityRoleHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			_, err = s.GuildRoleEdit(i.GuildID, usrRole, &role)
 			response := ""
 			if err != nil {
-				response = "Error editing role: " + err.Error()
+				log.Println("Error editing role: " + err.Error() + " - Creating new role instead")
 			} else {
 				response = "Successfully edited role to new specs"
+				Respond(s, i, response)
+				return
 			}
-			Respond(s, i, response)
-			return
 		}
 	}
 
@@ -1193,6 +1268,68 @@ func DeleteColorsBillboardHandler(s *discordgo.Session, i *discordgo.Interaction
 		response = "Successfully removed billboard from database"
 	}
 	Respond(s, i, response)
+}
+
+// Handler for refresh_all_billboards
+func RefreshAllBillboardsHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "refresh_all_billboards")
+
+	go UpdateAllSeriesBillboards(i.GuildID)
+	go UpdateAssignmentsBillboard(i.GuildID)
+	go UpdateColorsBillboard(i.GuildID)
+
+	Respond(s, i, "Update started for all billboards")
+}
+
+// Handler for add_notification_channel
+func AddNotificationChannelHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "add_notification_channel")
+	//Compiling values into Channel struct
+	var cha database.NotificationChannel
+	cha.Guild = i.GuildID
+	cha.Channel = i.ChannelID
+
+	//Add channel to DB
+	err := database.Repo.AddNotificationChannel(cha)
+	response := ""
+	if err != nil {
+		response = "Error adding notification channel to database: " + err.Error()
+	} else {
+		response = "Successfully added notification channel to database"
+	}
+	Respond(s, i, response)
+}
+
+// Handler for send_notification
+func SendNotificationHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "send_notification")
+	if i.Member.User.ID != config.Owner {
+		Respond(s, i, "Owner only command")
+		return
+	}
+	options := OptionsToMap(i.ApplicationCommandData().Options)
+	message := options["message"].StringValue()
+	log.Printf("Message: %s", message)
+
+	//Get all channels to send message to
+	channels, err := database.Repo.GetAllNotificationChannels()
+	if err != nil {
+		Respond(s, i, "Error getting channels to send to: "+err.Error())
+		return
+	}
+
+	good := 0
+	bad := 0
+	for _, channel := range channels {
+		_, err = s.ChannelMessageSend(channel.Channel, message)
+		if err != nil {
+			bad++
+			log.Printf("Message failed to send to server %s in channel %s: %s", channel.Guild, channel.Channel, err.Error())
+		} else {
+			good++
+		}
+	}
+	Respond(s, i, fmt.Sprintf("%d messages sent successfully\n%d messages failed to send", good, bad))
 }
 
 // Creates handlers for all slash commands based on relationship defined in commandHandlers

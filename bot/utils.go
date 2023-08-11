@@ -37,6 +37,29 @@ func GetUserPing(guildID string, userID string) (string, error) {
 	return usr.Mention(), nil
 }
 
+// Takes a role ID and returns a ping string
+func GetRolePing(guildID string, roleID string) (string, error) {
+	roles, err := goBot.GuildRoles(guildID)
+	if err != nil {
+		return "", err
+	}
+	for _, role := range roles {
+		if role.ID == roleID {
+			return role.Mention(), nil
+		}
+	}
+	return "", errors.New("role not found")
+}
+
+// Takes a channel ID and returns a ping string
+func GetChannelPing(channelID string) (string, error) {
+	channel, err := goBot.Channel(channelID)
+	if err != nil {
+		return "", err
+	}
+	return channel.Mention(), nil
+}
+
 // Handles response to a slash command
 func Respond(s *discordgo.Session, i *discordgo.InteractionCreate, response string) {
 	log.Printf("Response: %s\n", response)
@@ -73,7 +96,24 @@ func RespondEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, response
 }
 
 func LogCommand(i *discordgo.InteractionCreate, name string) {
-	log.Printf("User %s (%s) in guild %s and channel %s used %s command with options:\n", i.Member.User.Username, i.Member.User.ID, i.GuildID, i.ChannelID, name)
+	var g1, g2, c1, c2 string
+	gld, err := goBot.Guild(i.GuildID)
+	if err != nil {
+		g1 = i.GuildID
+		g2 = "Error fetching name: " + err.Error()
+	} else {
+		g1 = gld.Name
+		g2 = i.GuildID
+	}
+	chn, err := goBot.Channel(i.ChannelID)
+	if err != nil {
+		c1 = i.ChannelID
+		c2 = "Error fetching name: " + err.Error()
+	} else {
+		c1 = chn.Name
+		c2 = i.ChannelID
+	}
+	log.Printf("User %s (%s) in guild %s (%s) and channel %s (%s) used %s command with options:\n", i.Member.User.Username, i.Member.User.ID, g1, g2, c1, c2, name)
 }
 
 // Checks if command registered with Discord is in bot

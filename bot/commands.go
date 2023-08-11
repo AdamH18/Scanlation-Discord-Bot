@@ -264,6 +264,12 @@ var (
 			},
 		},
 		{
+			Name:                     "server_series",
+			Description:              "See all existing series on the server (admin only)",
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &adminPerms,
+		},
+		{
 			Name:                     "change_series_title",
 			Description:              "Changes the full name of the series. Shorthand name is unchanged (admin only)",
 			DMPermission:             &dmPerms,
@@ -352,6 +358,12 @@ var (
 			},
 		},
 		{
+			Name:                     "server_users",
+			Description:              "See all registered users on the server (admin only)",
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &adminPerms,
+		},
+		{
 			Name:                     "add_job",
 			Description:              "Register a new job type for the group (admin only)",
 			DMPermission:             &dmPerms,
@@ -404,6 +416,12 @@ var (
 					Required:    true,
 				},
 			},
+		},
+		{
+			Name:                     "server_jobs",
+			Description:              "See all existing jobs on the server (admin only)",
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &adminPerms,
 		},
 		{
 			Name:                     "add_member_role",
@@ -487,15 +505,15 @@ var (
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "series",
-					Description: "Shorthand name for the series",
+					Name:        "job",
+					Description: "Shorthand name for the job",
 					Required:    true,
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "job",
-					Description: "Shorthand name for the job",
-					Required:    true,
+					Name:        "series",
+					Description: "Shorthand name for the series",
+					Required:    false,
 				},
 			},
 		},
@@ -753,11 +771,34 @@ var (
 			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &adminPerms,
 		},
+
+		// OWNER COMMANDS
+		{
+			Name:                     "add_notification_channel",
+			Description:              "Sets channel to receive messages containing updates from bot owner (admin only)",
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &adminPerms,
+		},
+		{
+			Name:                     "send_notification",
+			Description:              "Send message to all registered notification channels (owner only)",
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &adminPerms,
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "message",
+					Description: "Message to send",
+					Required:    true,
+				},
+			},
+		},
 	}
 
 	//Map to link slash commands to their handler
 	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
 		"help": HelpHandler,
+		//"admin_help": AdminHelpHandler,
 
 		//TODO: Investigate autocomplete - https://github.com/bwmarrin/discordgo/blob/master/examples/autocomplete/main.go
 
@@ -773,18 +814,22 @@ var (
 
 		"add_series":            AddSeriesHandler,
 		"remove_series":         RemoveSeriesHandler,
+		"server_series":         ServerSeriesHandler,
 		"change_series_title":   ChangeSeriesTitleHandler,
 		"change_series_repo":    ChangeSeriesRepoHandler,
 		"add_series_channel":    AddSeriesChannelHandler,
 		"remove_series_channel": RemoveSeriesChannelHandler,
 		"add_user":              AddUserHandler,
 		"remove_user":           RemoveUserHandler,
+		"server_users":          ServerUsersHandler,
 		"add_job":               AddJobHandler,
 		"add_global_job":        AddGlobalJobHandler,
 		"remove_job":            RemoveJobHandler,
+		"server_jobs":           ServerJobsHandler,
 		"add_member_role":       AddMemberRoleHandler,
 		"remove_member_role":    RemoveMemberRoleHandler,
 		"reg_series_channels":   RegSeriesChannelsHandler,
+		//"server_settings": ServerSettingsHandler,
 
 		"add_series_assignment":    AddSeriesAssignmentHandler,
 		"remove_series_assignment": RemoveSeriesAssignmentHandler,
@@ -798,8 +843,8 @@ var (
 		"ts":                       TSPingHandler,
 		"pr":                       PRPingHandler,
 
-		/*"my_settings":    MySettingsHandler,
-		"user_settings":  UserSettingsHandler,*/
+		"my_settings":     MySettingsHandler,
+		"user_settings":   UserSettingsHandler,
 		"set_color":       SetColorHandler,
 		"set_user_color":  SetUserColorHandler,
 		"vanity_role":     VanityRoleHandler,
@@ -811,6 +856,9 @@ var (
 		"delete_assignments_billboard": DeleteAssignmentsBillboardHandler,
 		"create_colors_billboard":      CreateColorsBillboardHandler,
 		"delete_colors_billboard":      DeleteColorsBillboardHandler,
-		//"refresh_all_billboards":       RefreshAllBillboardsHandler,
+		"refresh_all_billboards":       RefreshAllBillboardsHandler,
+
+		"add_notification_channel": AddNotificationChannelHandler,
+		"send_notification":        SendNotificationHandler,
 	}
 )

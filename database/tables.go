@@ -104,4 +104,10 @@ var tableQuerys = []string{
 		message VARCHAR(30)
     );
     `,
+	// Channel for bot notifications
+	`CREATE TABLE IF NOT EXISTS notification_channels(
+		guild VARCHAR(20) PRIMARY KEY,
+		channel VARCHAR(30)
+    );
+    `,
 }

@@ -74,3 +74,8 @@ type ColorBB struct {
 	Channel string
 	Message string
 }
+
+type NotificationChannel struct {
+	Guild   string
+	Channel string
+}

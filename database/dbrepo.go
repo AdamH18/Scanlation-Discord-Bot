@@ -144,6 +144,18 @@ func (r *SQLiteRepository) AddAssignment(sea SeriesAssignment) error {
 	return nil
 }
 
+// Add notification channel entry to DB
+func (r *SQLiteRepository) AddNotificationChannel(cha NotificationChannel) error {
+	M.Lock()
+	_, err := r.NotificationChannelsExec("REPLACE INTO notification_channels(guild, channel) values(?, ?)", cha.Guild, cha.Channel)
+	M.Unlock()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Remove reminder entry by ID
 func (r *SQLiteRepository) RemoveReminder(id int64, guild string) (int64, error) {
 	M.Lock()
@@ -550,6 +562,28 @@ func (r *SQLiteRepository) RegisteredJob(job string, guild string) bool {
 	return res.Next()
 }
 
+// Get all registered users in server
+func (r *SQLiteRepository) GetAllUsers(guild string) ([]string, error) {
+	M.Lock()
+	res, err := r.db.Query("SELECT user FROM users WHERE guild = ?", guild)
+	M.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	//Return all users
+	users := []string{}
+	for res.Next() {
+		var user string
+		if err := res.Scan(&user); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, nil
+}
+
 // Get a server's member role if registered
 func (r *SQLiteRepository) GetMemberRole(guild string) string {
 	M.Lock()
@@ -775,6 +809,84 @@ func (r *SQLiteRepository) GetSeriesFullName(seriesSh string, guild string) (str
 	}
 }
 
+// Get full name and short name of all series in server
+func (r *SQLiteRepository) GetAllSeries(guild string) ([]Series, error) {
+	M.Lock()
+	res, err := r.db.Query("SELECT name_sh, name_full FROM series WHERE guild = ?", guild)
+	M.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	//Return array of all results
+	var nameSh, nameFull string
+	series := []Series{}
+	for res.Next() {
+		err = res.Scan(&nameSh, &nameFull)
+		if err != nil {
+			return nil, err
+		}
+		ser := Series{
+			NameSh:   nameSh,
+			NameFull: nameFull,
+		}
+		series = append(series, ser)
+	}
+	return series, nil
+}
+
+// Get all channels registered to a series
+func (r *SQLiteRepository) GetAllSeriesChannels(series string, guild string) ([]string, error) {
+	M.Lock()
+	res, err := r.db.Query("SELECT channel FROM channels WHERE series = ? AND guild = ?", series, guild)
+	M.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	//Return array of all results
+	var channel string
+	channels := []string{}
+	for res.Next() {
+		err = res.Scan(&channel)
+		if err != nil {
+			return nil, err
+		}
+		channels = append(channels, channel)
+	}
+	return channels, nil
+}
+
+// Get get full name, short name, and locality of all jobs in server
+func (r *SQLiteRepository) GetAllJobs(guild string) ([]Job, error) {
+	M.Lock()
+	res, err := r.db.Query("SELECT * FROM jobs WHERE guild = ? OR guild = 'GLOBAL'", guild)
+	M.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	//Return array of all results
+	var jobSh, jobFull, gld string
+	jobs := []Job{}
+	for res.Next() {
+		err = res.Scan(&jobSh, &jobFull, &gld)
+		if err != nil {
+			return nil, err
+		}
+		job := Job{
+			JobSh:   jobSh,
+			JobFull: jobFull,
+			Guild:   gld,
+		}
+		jobs = append(jobs, job)
+	}
+	return jobs, nil
+}
+
 // Get the full name of a job from its shorthand
 func (r *SQLiteRepository) GetJobFullName(jobSh string, guild string) (string, error) {
 	M.Lock()
@@ -936,4 +1048,25 @@ func (r *SQLiteRepository) GetColorsBillboard(guild string) (string, string, err
 	} else {
 		return "", "", nil
 	}
+}
+
+// Return all notification channels
+func (r *SQLiteRepository) GetAllNotificationChannels() ([]NotificationChannel, error) {
+	M.Lock()
+	res, err := r.db.Query("SELECT * FROM notification_channels")
+	M.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	var all []NotificationChannel
+	for res.Next() {
+		var notif NotificationChannel
+		if err := res.Scan(&notif.Guild, &notif.Channel); err != nil {
+			return nil, err
+		}
+		all = append(all, notif)
+	}
+	return all, nil
 }
