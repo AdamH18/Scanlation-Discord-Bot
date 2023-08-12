@@ -1318,6 +1318,8 @@ func SendNotificationHandler(s *discordgo.Session, i *discordgo.InteractionCreat
 		return
 	}
 
+	//TODO: Add basic message parsing to insert linebreaks
+
 	good := 0
 	bad := 0
 	for _, channel := range channels {

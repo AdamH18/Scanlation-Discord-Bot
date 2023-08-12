@@ -72,16 +72,13 @@ func CheckReminders() {
 func DoBackup() {
 	log.Println("Backing up DB")
 	name := "DB_" + time.Now().Format(time.RFC3339) + ".db"
-	database.M.Lock()
 	r, err := os.Open(config.DatabaseFile)
 	if err != nil {
 		log.Printf("Error opening DB file: %s\n", err)
-		database.M.Unlock()
 		return
 	}
 	_, err = goBot.ChannelFileSend(config.DatabaseBackupChannel, name, r)
 	r.Close()
-	database.M.Unlock()
 	if err != nil {
 		log.Printf("Error backing up file: %s\n", err)
 	}

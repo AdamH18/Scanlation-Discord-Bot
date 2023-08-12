@@ -67,7 +67,8 @@ func BuildHelpEmbed() *discordgo.MessageEmbed {
 				Name: "User customization:",
 				Value: "**set_color** - Set the color you wish to have your name in on credits pages\n" +
 					"**vanity_role** - Give yourself a vanity role with a custom name and color. If the server is getting close to maximum roles, you can copy someone else's role instead\n" +
-					"**rem_vanity_role** - Get rid of your vanity role. Never actually deletes it from the server",
+					"**rem_vanity_role** - Get rid of your vanity role. Never actually deletes it from the server\n" +
+					"**my_settings** - Gives you an overview of all your settings in this server",
 			},
 		},
 	}

@@ -3,15 +3,12 @@ package database
 import (
 	"database/sql"
 	"log"
-	"sync"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 var (
-	Repo *SQLiteRepository
-	//TODO: See if _mutex=full means I can get rid of this mutex
-	M             sync.Mutex
+	Repo          *SQLiteRepository
 	SeriesCh      chan func() (string, string)
 	AssignmentsCh chan string
 	ColorsCh      chan string

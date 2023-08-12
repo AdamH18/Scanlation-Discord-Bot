@@ -26,9 +26,8 @@ func (r *SQLiteRepository) Initialize() error {
 func (r *SQLiteRepository) AddReminder(rem Reminder) error {
 	//No reminder should repeat more often than once a day
 	days := int64(math.Max(float64(rem.Days), 1.0))
-	M.Lock()
 	_, err := r.RemindersExec("INSERT INTO reminders(guild, channel, user, days, message, repeat, time) values(?, ?, ?, ?, ?, ?, ?)", rem.Guild, rem.Channel, rem.User, days, rem.Message, rem.Repeat, rem.Time)
-	M.Unlock()
+
 	if err != nil {
 		return err
 	}
@@ -38,9 +37,8 @@ func (r *SQLiteRepository) AddReminder(rem Reminder) error {
 
 // Add series entry to DB
 func (r *SQLiteRepository) AddSeries(ser Series) error {
-	M.Lock()
 	_, err := r.SeriesExec(ser.Guild, "INSERT INTO series(name_sh, name_full, guild, ping_role, repo_link) values(?, ?, ?, ?, ?)", strings.ToLower(ser.NameSh), ser.NameFull, ser.Guild, ser.PingRole, ser.RepoLink)
-	M.Unlock()
+
 	if err != nil {
 		return err
 	}
@@ -50,9 +48,8 @@ func (r *SQLiteRepository) AddSeries(ser Series) error {
 
 // Add channel entry to DB
 func (r *SQLiteRepository) AddChannel(cha Channel) error {
-	M.Lock()
 	_, err := r.ChannelsExec("INSERT INTO channels(channel, series, guild) values(?, ?, ?)", cha.Channel, strings.ToLower(cha.Series), cha.Guild)
-	M.Unlock()
+
 	if err != nil {
 		return err
 	}
@@ -62,9 +59,8 @@ func (r *SQLiteRepository) AddChannel(cha Channel) error {
 
 // Add user entry to DB
 func (r *SQLiteRepository) AddUser(usr User) error {
-	M.Lock()
 	_, err := r.UsersExec(usr.Guild, "INSERT INTO users(user, color, vanity_role, guild) values(?, ?, ?, ?)", usr.User, usr.Color, usr.VanityRole, usr.Guild)
-	M.Unlock()
+
 	if err != nil {
 		return err
 	}
@@ -74,9 +70,8 @@ func (r *SQLiteRepository) AddUser(usr User) error {
 
 // Add job entry to DB
 func (r *SQLiteRepository) AddJob(job Job) error {
-	M.Lock()
 	_, err := r.JobsExec("INSERT INTO jobs(job_sh, job_full, guild) values(?, ?, ?)", strings.ToLower(job.JobSh), job.JobFull, job.Guild)
-	M.Unlock()
+
 	if err != nil {
 		return err
 	}
@@ -86,9 +81,8 @@ func (r *SQLiteRepository) AddJob(job Job) error {
 
 // Add member role entry to DB
 func (r *SQLiteRepository) AddMemberRole(mem MemberRole) error {
-	M.Lock()
 	_, err := r.MemberRoleExec("INSERT INTO member_role(guild, role_id) values(?, ?)", mem.Guild, mem.Role)
-	M.Unlock()
+
 	if err != nil {
 		return err
 	}
@@ -98,9 +92,8 @@ func (r *SQLiteRepository) AddMemberRole(mem MemberRole) error {
 
 // Add series channel entry to DB
 func (r *SQLiteRepository) AddSeriesChannels(sec SeriesChannels) error {
-	M.Lock()
 	_, err := r.SeriesChannelsExec("REPLACE INTO series_channels(top, bottom, guild) values(?, ?, ?)", sec.Top, sec.Bottom, sec.Guild)
-	M.Unlock()
+
 	if err != nil {
 		return err
 	}
@@ -110,9 +103,8 @@ func (r *SQLiteRepository) AddSeriesChannels(sec SeriesChannels) error {
 
 // Add roles billboard entry to DB
 func (r *SQLiteRepository) AddRolesBillboard(bb JobBB) error {
-	M.Lock()
 	_, err := r.RolesBillboardsExec("INSERT INTO roles_billboards(guild, channel, message) values(?, ?, ?)", bb.Guild, bb.Channel, bb.Message)
-	M.Unlock()
+
 	if err != nil {
 		return err
 	}
@@ -122,9 +114,8 @@ func (r *SQLiteRepository) AddRolesBillboard(bb JobBB) error {
 
 // Add colors billboard entry to DB
 func (r *SQLiteRepository) AddColorsBillboard(bb ColorBB) error {
-	M.Lock()
 	_, err := r.RolesBillboardsExec("INSERT INTO colors_billboards(guild, channel, message) values(?, ?, ?)", bb.Guild, bb.Channel, bb.Message)
-	M.Unlock()
+
 	if err != nil {
 		return err
 	}
@@ -134,9 +125,8 @@ func (r *SQLiteRepository) AddColorsBillboard(bb ColorBB) error {
 
 // Add assignment entry to DB
 func (r *SQLiteRepository) AddAssignment(sea SeriesAssignment) error {
-	M.Lock()
 	_, err := r.SeriesAssignmentsExec(sea.Guild, "INSERT INTO series_assignments(user, series, job, guild) values(?, ?, ?, ?)", sea.User, strings.ToLower(sea.Series), strings.ToLower(sea.Job), sea.Guild)
-	M.Unlock()
+
 	if err != nil {
 		return err
 	}
@@ -146,9 +136,8 @@ func (r *SQLiteRepository) AddAssignment(sea SeriesAssignment) error {
 
 // Add notification channel entry to DB
 func (r *SQLiteRepository) AddNotificationChannel(cha NotificationChannel) error {
-	M.Lock()
 	_, err := r.NotificationChannelsExec("REPLACE INTO notification_channels(guild, channel) values(?, ?)", cha.Guild, cha.Channel)
-	M.Unlock()
+
 	if err != nil {
 		return err
 	}
@@ -158,9 +147,8 @@ func (r *SQLiteRepository) AddNotificationChannel(cha NotificationChannel) error
 
 // Remove reminder entry by ID
 func (r *SQLiteRepository) RemoveReminder(id int64, guild string) (int64, error) {
-	M.Lock()
 	res, err := r.RemindersExec("DELETE FROM reminders WHERE ROWID = ? AND guild = ?", id, guild)
-	M.Unlock()
+
 	if err != nil {
 		return 0, err
 	}
@@ -175,9 +163,8 @@ func (r *SQLiteRepository) RemoveReminder(id int64, guild string) (int64, error)
 
 // Remove series entry and all references to series in other tables
 func (r *SQLiteRepository) RemoveSeries(nameSh string, nameFull string, guildId string) (bool, error) {
-	M.Lock()
 	res, err := r.SeriesExec(guildId, "DELETE FROM series WHERE name_sh = ? AND name_full = ? AND guild = ?", nameSh, nameFull, guildId)
-	M.Unlock()
+
 	if err != nil {
 		return false, err
 	}
@@ -200,9 +187,8 @@ func (r *SQLiteRepository) RemoveSeries(nameSh string, nameFull string, guildId 
 
 // Remove channel
 func (r *SQLiteRepository) RemoveChannel(channel string) (bool, error) {
-	M.Lock()
 	res, err := r.ChannelsExec("DELETE FROM channels WHERE channel = ?", channel)
-	M.Unlock()
+
 	if err != nil {
 		return false, err
 	}
@@ -217,9 +203,8 @@ func (r *SQLiteRepository) RemoveChannel(channel string) (bool, error) {
 
 // Remove user and all references to user in other tables
 func (r *SQLiteRepository) RemoveUser(userId string, guildId string) (bool, error) {
-	M.Lock()
 	res, err := r.UsersExec(guildId, "DELETE FROM users WHERE user = ? AND guild = ?", userId, guildId)
-	M.Unlock()
+
 	if err != nil {
 		return false, err
 	}
@@ -241,9 +226,8 @@ func (r *SQLiteRepository) RemoveUser(userId string, guildId string) (bool, erro
 
 // Remove job and all references to job in other tables
 func (r *SQLiteRepository) RemoveJob(nameSh string, guildId string) (bool, error) {
-	M.Lock()
 	res, err := r.JobsExec("DELETE FROM jobs WHERE job_sh = ? AND guild = ?", nameSh, guildId)
-	M.Unlock()
+
 	if err != nil {
 		return false, err
 	}
@@ -264,9 +248,8 @@ func (r *SQLiteRepository) RemoveJob(nameSh string, guildId string) (bool, error
 
 // Remove member role
 func (r *SQLiteRepository) RemoveMemberRole(guild string) (bool, error) {
-	M.Lock()
 	res, err := r.MemberRoleExec("DELETE FROM member_role WHERE guild = ?", guild)
-	M.Unlock()
+
 	if err != nil {
 		return false, err
 	}
@@ -281,9 +264,8 @@ func (r *SQLiteRepository) RemoveMemberRole(guild string) (bool, error) {
 
 // Remove series assignment
 func (r *SQLiteRepository) RemoveSeriesAssignment(user string, series string, job string, guild string) (bool, error) {
-	M.Lock()
 	res, err := r.SeriesAssignmentsExec(guild, "DELETE FROM series_assignments WHERE user = ? AND series = ? AND job = ? AND guild = ?", user, series, job, guild)
-	M.Unlock()
+
 	if err != nil {
 		return false, err
 	}
@@ -298,9 +280,8 @@ func (r *SQLiteRepository) RemoveSeriesAssignment(user string, series string, jo
 
 // Remove all assignments for a user
 func (r *SQLiteRepository) RemoveAllAssignments(user string, guild string) (bool, error) {
-	M.Lock()
 	res, err := r.SeriesAssignmentsExec(guild, "DELETE FROM series_assignments WHERE user = ? AND guild = ?", user, guild)
-	M.Unlock()
+
 	if err != nil {
 		return false, err
 	}
@@ -315,9 +296,8 @@ func (r *SQLiteRepository) RemoveAllAssignments(user string, guild string) (bool
 
 // Remove roles billboard
 func (r *SQLiteRepository) RemoveRolesBillboard(guild string) (bool, error) {
-	M.Lock()
 	res, err := r.RolesBillboardsExec("DELETE FROM roles_billboards WHERE guild = ?", guild)
-	M.Unlock()
+
 	if err != nil {
 		return false, err
 	}
@@ -332,9 +312,8 @@ func (r *SQLiteRepository) RemoveRolesBillboard(guild string) (bool, error) {
 
 // Remove colors billboard
 func (r *SQLiteRepository) RemoveColorsBillboard(guild string) (bool, error) {
-	M.Lock()
 	res, err := r.ColorsBillboardsExec("DELETE FROM colors_billboards WHERE guild = ?", guild)
-	M.Unlock()
+
 	if err != nil {
 		return false, err
 	}
@@ -349,9 +328,8 @@ func (r *SQLiteRepository) RemoveColorsBillboard(guild string) (bool, error) {
 
 // Update series name
 func (r *SQLiteRepository) UpdateSeriesName(nameSh string, newName string, guild string) (bool, error) {
-	M.Lock()
 	res, err := r.SeriesExec(guild, "UPDATE series SET name_full = ? WHERE name_sh = ? AND guild = ?", newName, nameSh, guild)
-	M.Unlock()
+
 	if err != nil {
 		return false, err
 	}
@@ -366,9 +344,8 @@ func (r *SQLiteRepository) UpdateSeriesName(nameSh string, newName string, guild
 
 // Update series repo link
 func (r *SQLiteRepository) UpdateSeriesRepoLink(nameSh string, newLink string, guild string) (bool, error) {
-	M.Lock()
 	res, err := r.SeriesExec(guild, "UPDATE series SET repo_link = ? WHERE name_sh = ? AND guild = ?", newLink, nameSh, guild)
-	M.Unlock()
+
 	if err != nil {
 		return false, err
 	}
@@ -383,9 +360,8 @@ func (r *SQLiteRepository) UpdateSeriesRepoLink(nameSh string, newLink string, g
 
 // Update user's color to new one
 func (r *SQLiteRepository) UpdateColor(user string, color string, guild string) error {
-	M.Lock()
 	_, err := r.UsersExec(guild, "UPDATE users SET color = ? WHERE user = ? AND guild = ?", color, user, guild)
-	M.Unlock()
+
 	if err != nil {
 		return err
 	}
@@ -395,9 +371,8 @@ func (r *SQLiteRepository) UpdateColor(user string, color string, guild string) 
 
 // Update user's vanity role to new one
 func (r *SQLiteRepository) UpdateVanityRole(user string, role string, guild string) error {
-	M.Lock()
 	_, err := r.UsersExec(guild, "UPDATE users SET vanity_role = ? WHERE user = ? AND guild = ?", role, user, guild)
-	M.Unlock()
+
 	if err != nil {
 		return err
 	}
@@ -407,9 +382,8 @@ func (r *SQLiteRepository) UpdateVanityRole(user string, role string, guild stri
 
 // Add update top of series channels entry
 func (r *SQLiteRepository) UpdateSeriesChannelsTop(cat string, guild string) {
-	M.Lock()
 	_, err := r.SeriesChannelsExec("UPDATE series_channels SET top = ? WHERE guild = ?", cat, guild)
-	M.Unlock()
+
 	if err != nil {
 		log.Print("Error updating top of series channels: " + err.Error())
 	}
@@ -417,9 +391,8 @@ func (r *SQLiteRepository) UpdateSeriesChannelsTop(cat string, guild string) {
 
 // Add update bottom of series channels entry
 func (r *SQLiteRepository) UpdateSeriesChannelsBottom(cat string, guild string) {
-	M.Lock()
 	_, err := r.SeriesChannelsExec("UPDATE series_channels SET bottom = ? WHERE guild = ?", cat, guild)
-	M.Unlock()
+
 	if err != nil {
 		log.Print("Error updating bottom of series channels: " + err.Error())
 	}
@@ -427,9 +400,8 @@ func (r *SQLiteRepository) UpdateSeriesChannelsBottom(cat string, guild string) 
 
 // Take expired reminder and add days field to alarm time to set next reminder
 func (r *SQLiteRepository) ResetReminder(id int64) error {
-	M.Lock()
 	_, err := r.RemindersExec("UPDATE reminders SET time = datetime(time, '+' || (SELECT CAST(days AS varchar(20))) || ' days') WHERE ROWID = ?", id)
-	M.Unlock()
+
 	if err != nil {
 		return err
 	}
@@ -439,9 +411,8 @@ func (r *SQLiteRepository) ResetReminder(id int64) error {
 
 // Remove reminder entry only if it belongs to specified user
 func (r *SQLiteRepository) RemoveUserReminder(id int64, userID string, guild string) (int64, error) {
-	M.Lock()
 	res, err := r.RemindersExec("DELETE FROM reminders WHERE ROWID = ? AND user = ? AND guild = ?", id, userID, guild)
-	M.Unlock()
+
 	if err != nil {
 		return 0, err
 	}
@@ -456,9 +427,8 @@ func (r *SQLiteRepository) RemoveUserReminder(id int64, userID string, guild str
 
 // Return all reminders belonging to a specific user
 func (r *SQLiteRepository) GetUserReminders(userID string, guild string) ([]Reminder, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT ROWID, * FROM reminders WHERE user = ? AND guild = ?", userID, guild)
-	M.Unlock()
+
 	if err != nil {
 		return nil, err
 	}
@@ -477,9 +447,8 @@ func (r *SQLiteRepository) GetUserReminders(userID string, guild string) ([]Remi
 
 // Return all reminders
 func (r *SQLiteRepository) GetAllReminders(guild string) ([]Reminder, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT ROWID, * FROM reminders WHERE guild = ?", guild)
-	M.Unlock()
+
 	if err != nil {
 		return nil, err
 	}
@@ -498,9 +467,8 @@ func (r *SQLiteRepository) GetAllReminders(guild string) ([]Reminder, error) {
 
 // Return all reminders for which current time is after time field
 func (r *SQLiteRepository) GetActiveReminders() ([]Reminder, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT ROWID, * FROM reminders WHERE time < ?", time.Now().Format("2006-01-02 15:04:05"))
-	M.Unlock()
+
 	if err != nil {
 		return nil, err
 	}
@@ -519,9 +487,8 @@ func (r *SQLiteRepository) GetActiveReminders() ([]Reminder, error) {
 
 // Check if the given series shorthand exists in the database
 func (r *SQLiteRepository) RegisteredSeries(ser string, guild string) bool {
-	M.Lock()
 	res, err := r.db.Query("SELECT * FROM series WHERE name_sh = ? AND guild = ?", ser, guild)
-	M.Unlock()
+
 	if err != nil {
 		log.Println("Failed to retrieve series info: " + err.Error())
 		return false
@@ -534,9 +501,8 @@ func (r *SQLiteRepository) RegisteredSeries(ser string, guild string) bool {
 
 // Check if the given user exists in the database
 func (r *SQLiteRepository) RegisteredUser(usr string, guild string) bool {
-	M.Lock()
 	res, err := r.db.Query("SELECT * FROM users WHERE user = ? AND guild = ?", usr, guild)
-	M.Unlock()
+
 	if err != nil {
 		log.Println("Failed to retrieve user info: " + err.Error())
 		return false
@@ -549,9 +515,8 @@ func (r *SQLiteRepository) RegisteredUser(usr string, guild string) bool {
 
 // Check if the given job exists in the database
 func (r *SQLiteRepository) RegisteredJob(job string, guild string) bool {
-	M.Lock()
 	res, err := r.db.Query("SELECT * FROM jobs WHERE (job_sh = ?) AND (guild = ? OR guild = 'GLOBAL')", job, guild)
-	M.Unlock()
+
 	if err != nil {
 		log.Println("Failed to retrieve job info: " + err.Error())
 		return false
@@ -564,9 +529,8 @@ func (r *SQLiteRepository) RegisteredJob(job string, guild string) bool {
 
 // Get all registered users in server
 func (r *SQLiteRepository) GetAllUsers(guild string) ([]string, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT user FROM users WHERE guild = ?", guild)
-	M.Unlock()
+
 	if err != nil {
 		return nil, err
 	}
@@ -586,9 +550,8 @@ func (r *SQLiteRepository) GetAllUsers(guild string) ([]string, error) {
 
 // Get a server's member role if registered
 func (r *SQLiteRepository) GetMemberRole(guild string) string {
-	M.Lock()
 	res, err := r.db.Query("SELECT role_id FROM member_role WHERE guild = ?", guild)
-	M.Unlock()
+
 	if err != nil {
 		log.Println("Failed to retrieve role info: " + err.Error())
 		return ""
@@ -611,9 +574,8 @@ func (r *SQLiteRepository) GetMemberRole(guild string) string {
 
 // Get a server's series channel bounds if registered
 func (r *SQLiteRepository) GetSeriesChannels(guild string) (string, string, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT top, bottom FROM series_channels WHERE guild = ?", guild)
-	M.Unlock()
+
 	if err != nil {
 		return "", "", err
 	}
@@ -634,9 +596,8 @@ func (r *SQLiteRepository) GetSeriesChannels(guild string) (string, string, erro
 
 // Get the registered channel of a given series
 func (r *SQLiteRepository) GetLocalSeries(channel string) (string, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT series FROM channels WHERE channel = ?", channel)
-	M.Unlock()
+
 	if err != nil {
 		return "", err
 	}
@@ -657,9 +618,8 @@ func (r *SQLiteRepository) GetLocalSeries(channel string) (string, error) {
 
 // Get all assignments for a given series
 func (r *SQLiteRepository) GetSeriesAssignments(series string, guild string) (map[string][]string, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT user, job FROM series_assignments WHERE series = ? AND guild = ?", series, guild)
-	M.Unlock()
+
 	if err != nil {
 		return nil, err
 	}
@@ -683,9 +643,8 @@ func (r *SQLiteRepository) GetSeriesAssignments(series string, guild string) (ma
 
 // Get all assignments for a given user
 func (r *SQLiteRepository) GetUserAssignments(user string, guild string) (map[string][]string, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT series, job FROM series_assignments WHERE user = ? AND guild = ?", user, guild)
-	M.Unlock()
+
 	if err != nil {
 		return nil, err
 	}
@@ -709,9 +668,8 @@ func (r *SQLiteRepository) GetUserAssignments(user string, guild string) (map[st
 
 // Get all assignments for a given job
 func (r *SQLiteRepository) GetJobAssignments(job string, guild string) (map[string][]string, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT user, series FROM series_assignments WHERE job = ? AND guild = ?", job, guild)
-	M.Unlock()
+
 	if err != nil {
 		return nil, err
 	}
@@ -735,9 +693,8 @@ func (r *SQLiteRepository) GetJobAssignments(job string, guild string) (map[stri
 
 // Get all assignments in guild. Hierarchy is series-job-user
 func (r *SQLiteRepository) GetAllAssignments(guild string) (map[string]map[string][]string, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT user, series, job FROM series_assignments WHERE guild = ?", guild)
-	M.Unlock()
+
 	if err != nil {
 		return nil, err
 	}
@@ -766,9 +723,8 @@ func (r *SQLiteRepository) GetAllAssignments(guild string) (map[string]map[strin
 
 // Get all assignments for a given series and job
 func (r *SQLiteRepository) GetSeriesJobAssignments(series string, job string, guild string) ([]string, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT user FROM series_assignments WHERE series = ? AND job = ? AND guild = ?", series, job, guild)
-	M.Unlock()
+
 	if err != nil {
 		return nil, err
 	}
@@ -788,9 +744,8 @@ func (r *SQLiteRepository) GetSeriesJobAssignments(series string, job string, gu
 
 // Get the full name of a series from its shorthand
 func (r *SQLiteRepository) GetSeriesFullName(seriesSh string, guild string) (string, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT name_full FROM series WHERE name_sh = ? AND guild = ?", seriesSh, guild)
-	M.Unlock()
+
 	if err != nil {
 		return "", err
 	}
@@ -811,9 +766,8 @@ func (r *SQLiteRepository) GetSeriesFullName(seriesSh string, guild string) (str
 
 // Get full name and short name of all series in server
 func (r *SQLiteRepository) GetAllSeries(guild string) ([]Series, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT name_sh, name_full FROM series WHERE guild = ?", guild)
-	M.Unlock()
+
 	if err != nil {
 		return nil, err
 	}
@@ -838,9 +792,8 @@ func (r *SQLiteRepository) GetAllSeries(guild string) ([]Series, error) {
 
 // Get all channels registered to a series
 func (r *SQLiteRepository) GetAllSeriesChannels(series string, guild string) ([]string, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT channel FROM channels WHERE series = ? AND guild = ?", series, guild)
-	M.Unlock()
+
 	if err != nil {
 		return nil, err
 	}
@@ -861,9 +814,8 @@ func (r *SQLiteRepository) GetAllSeriesChannels(series string, guild string) ([]
 
 // Get get full name, short name, and locality of all jobs in server
 func (r *SQLiteRepository) GetAllJobs(guild string) ([]Job, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT * FROM jobs WHERE guild = ? OR guild = 'GLOBAL'", guild)
-	M.Unlock()
+
 	if err != nil {
 		return nil, err
 	}
@@ -889,9 +841,8 @@ func (r *SQLiteRepository) GetAllJobs(guild string) ([]Job, error) {
 
 // Get the full name of a job from its shorthand
 func (r *SQLiteRepository) GetJobFullName(jobSh string, guild string) (string, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT job_full, guild FROM jobs WHERE (job_sh = ?) AND (guild = ? OR guild = 'GLOBAL')", jobSh, guild)
-	M.Unlock()
+
 	if err != nil {
 		return "", err
 	}
@@ -920,9 +871,8 @@ func (r *SQLiteRepository) GetJobFullName(jobSh string, guild string) (string, e
 
 // Get preferred color of a user
 func (r *SQLiteRepository) GetUserColor(user string, guild string) (string, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT color FROM users WHERE user = ? AND guild = ?", user, guild)
-	M.Unlock()
+
 	if err != nil {
 		return "", err
 	}
@@ -943,9 +893,8 @@ func (r *SQLiteRepository) GetUserColor(user string, guild string) (string, erro
 
 // Get preferred color of all users in server
 func (r *SQLiteRepository) GetAllColors(guild string) (map[string]string, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT user, color FROM users WHERE guild = ?", guild)
-	M.Unlock()
+
 	if err != nil {
 		return nil, err
 	}
@@ -965,9 +914,8 @@ func (r *SQLiteRepository) GetAllColors(guild string) (map[string]string, error)
 
 // Get vanity role of a user
 func (r *SQLiteRepository) GetUserVanityRole(user string, guild string) (string, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT vanity_role FROM users WHERE user = ? AND guild = ?", user, guild)
-	M.Unlock()
+
 	if err != nil {
 		return "", err
 	}
@@ -988,9 +936,8 @@ func (r *SQLiteRepository) GetUserVanityRole(user string, guild string) (string,
 
 // Get number of users with a given vanity role
 func (r *SQLiteRepository) NumUsersWithVanity(role string, guild string) (int, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT user FROM users WHERE vanity_role = ? AND guild = ?", role, guild)
-	M.Unlock()
+
 	if err != nil {
 		return 0, err
 	}
@@ -1006,9 +953,8 @@ func (r *SQLiteRepository) NumUsersWithVanity(role string, guild string) (int, e
 
 // Get roles billboard message ID in guild
 func (r *SQLiteRepository) GetRolesBillboard(guild string) (string, string, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT message, channel FROM roles_billboards WHERE guild = ?", guild)
-	M.Unlock()
+
 	if err != nil {
 		return "", "", err
 	}
@@ -1029,9 +975,8 @@ func (r *SQLiteRepository) GetRolesBillboard(guild string) (string, string, erro
 
 // Get colors billboard message ID in guild
 func (r *SQLiteRepository) GetColorsBillboard(guild string) (string, string, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT message, channel FROM colors_billboards WHERE guild = ?", guild)
-	M.Unlock()
+
 	if err != nil {
 		return "", "", err
 	}
@@ -1052,9 +997,8 @@ func (r *SQLiteRepository) GetColorsBillboard(guild string) (string, string, err
 
 // Return all notification channels
 func (r *SQLiteRepository) GetAllNotificationChannels() ([]NotificationChannel, error) {
-	M.Lock()
 	res, err := r.db.Query("SELECT * FROM notification_channels")
-	M.Unlock()
+
 	if err != nil {
 		return nil, err
 	}
