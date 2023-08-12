@@ -28,8 +28,7 @@ func NewSQLiteRepository(db *sql.DB) *SQLiteRepository {
 func StartDatabase(loc string) {
 	log.Println("Starting database...")
 	// Database locking error fix from API spec
-	db, err := sql.Open("sqlite3", "file:"+loc+"?cache=shared&_mutex=full")
-	db.SetMaxOpenConns(1)
+	db, err := sql.Open("sqlite3", "file:"+loc+"?cache=shared&_mutex=full&_busy_timeout=10000")
 	if err != nil {
 		log.Fatal(err)
 	}
