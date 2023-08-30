@@ -27,7 +27,7 @@ The configuration scheme is as follows:
 | Token | none | string | Required, [bot's access token](https://discord.com/developers/docs/reference#authentication) |
 | RemoveCommands | false | bool | Choose whether or not to remove registered slash commands from Discord upon shutdown |
 | DatabaseFile | sqlite.db | string | Location of database file for bot to use |
-| DatabaseBackupChannel | none | string | Discord channel on which to dump DB backups |
+| DatabaseBackupChannel | none | string | Discord channel in which to dump DB backups |
 | Owner | none | string | User ID of bot owner |
 
 3. Launch the bot:
@@ -36,11 +36,11 @@ The configuration scheme is as follows:
 docker compose up -d
 ```
 
-## Availabe commands
+## Available commands
 
 | Command | Permission | Description |
 |---------|------------|-------------|
-| /help | all | show help |
+| /help | all | Show help |
 | /add_reminder | all | Add reminder for yourself |
 | /my_reminders | all | Show all personal reminders |
 | /rem_reminder | all | Remove reminder for yourself |
@@ -61,7 +61,7 @@ docker compose up -d
 | /remove_user | admin only | Remove a user from the group, deletes all related settings. User is not kicked |
 | /server_users | admin only | See all registered users on the server |
 | /add_job | admin only | Register a new job type for the group |
-| /add_global_job | admin only | Register a new job type for all users |
+| /add_global_job | owner only | Register a new job type for all users |
 | /remove_job | admin only | Remove a job type for the group, including all assignments to that job |
 | /server_jobs | admin only | See all existing jobs on the server |
 | /add_member_role | admin only | Registers the role used to determine group members |
@@ -74,10 +74,10 @@ docker compose up -d
 | /my_assignments | all | See your personal assignments |
 | /user_assignments | all | See the assignments of a given user |
 | /job_assignments | all | See everyone assigned to a given job |
-| /tl | all | Ping the translator(s) |
-| /rd | all | Ping the redrawer(s) |
-| /ts | all | Ping the typesetter(s) |
-| /pr | all | Ping the proofreader(s) |
+| /tl | all | Ping the translator(s) assigned to a series |
+| /rd | all | Ping the redrawer(s) assigned to a series |
+| /ts | all | Ping the typesetter(s) assigned to a series |
+| /pr | all | Ping the proofreader(s) assigned to a series |
 | /my_settings | all | See your server settings |
 | /user_settings | admin only | See user's server settings |
 | /set_color | all | Set your color for credits pages |
@@ -92,4 +92,4 @@ docker compose up -d
 | /delete_colors_billboard | admin only | Deregister the billboard showcasing all color prefs. Does not delete message | 
 | /refresh_all_billboards | admin only | Refreshes all billboards on the server |
 | /add_notification_channel | admin only | Sets channel to receive messages containing updates from bot owner |
-| /send_notification | admin only | Send message to all registered notification channels |
+| /send_notification | owner only | Send message to all registered notification channels |
