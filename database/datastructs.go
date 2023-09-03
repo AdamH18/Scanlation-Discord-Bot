@@ -18,6 +18,17 @@ func (r Reminder) String() string {
 	return fmt.Sprintf("%d;%s;%s;%s;%d;%s;%t;%s", r.ID, r.Guild, r.Channel, r.User, r.Days, r.Message, r.Repeat, r.Time)
 }
 
+//Contains all data corresponding to a bounty
+type Bounty struct {
+	CustomID  string
+	Guild     string
+	Job       string
+	Series    string
+	Expires   int64
+	MessageID string
+	Channel   string
+}
+
 type Series struct {
 	NameSh   string
 	NameFull string

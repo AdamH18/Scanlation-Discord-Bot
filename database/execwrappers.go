@@ -82,6 +82,11 @@ func (r *SQLiteRepository) UsersExec(guild string, query string, args ...any) (s
 	return res, err
 }
 
+// Changing the bounties table do not effect billboards (job, series, or channel)
+func (r *SQLiteRepository) BountiesExec(query string, args ...any) (sql.Result, error) {
+	return r.db.Exec(query, args...)
+}
+
 // Changing the assignments table can affect assignments and series billboards
 func (r *SQLiteRepository) SeriesAssignmentsExec(guild string, query string, args ...any) (sql.Result, error) {
 	res, err := r.db.Exec(query, args...)

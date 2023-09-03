@@ -92,6 +92,41 @@ func AddReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	Respond(s, i, response)
 }
 
+// Handler for add_bounty
+
+func AddBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "add_bounty")
+	//Compiling values into Bounty struct
+	options := OptionsToMap(i.ApplicationCommandData().Options)
+	bountyID := options["bounty-id"].StringValue()
+	var b database.Bounty
+	b.CustomID = bountyID
+	b.Guild = i.GuildID
+	b.Job = options["job"].StringValue()
+	b.Series = options["series"].StringValue()
+	b.Expires = options["expires"].IntValue()
+}
+
+func ModifyBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "add_bounty")
+	//retrieve bounty from database
+	options := OptionsToMap(i.ApplicationCommandData().Options)
+	bountyID := options["bounty-id"].StringValue()
+	b, err := database.Repo.GetBounty(bountyID, i.GuildID)
+	if err != nil {
+		Respond(s, i, "Error retrieving bounty from database: "+err.Error())
+		return
+	}
+	//modify bounty
+
+	//update bounty in database
+	err = database.Repo.UpdateBounty()
+}
+
+func RemoveBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "remove_bounty")
+}
+
 // Handler for rem_any_reminder
 func RemAnyReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	LogCommand(i, "rem_any_reminder")

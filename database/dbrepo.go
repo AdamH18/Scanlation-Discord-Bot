@@ -342,6 +342,21 @@ func (r *SQLiteRepository) UpdateSeriesName(nameSh string, newName string, guild
 	return rows > 0, nil
 }
 
+func (r *SQLiteRepository) UpdateBounty(customID string, newJob string, newSeries string, newExpires time.Time, guild string) (bool, error) {
+	res, err := r.BountiesExec("UPDATE bounties SET job = ?, series = ?, expires = ? WHERE customid = ? AND guild = ?", newJob, newSeries, newExpires, customID, guild)
+
+	if err != nil {
+		return false, err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return rows > 0, nil
+}
+
 // Update series repo link
 func (r *SQLiteRepository) UpdateSeriesRepoLink(nameSh string, newLink string, guild string) (bool, error) {
 	res, err := r.SeriesExec(guild, "UPDATE series SET repo_link = ? WHERE name_sh = ? AND guild = ?", newLink, nameSh, guild)
@@ -465,6 +480,25 @@ func (r *SQLiteRepository) GetAllReminders(guild string) ([]Reminder, error) {
 	return all, nil
 }
 
+func (r *SQLiteRepository) GetAllBounties(guild string) ([]Bounty, error) {
+	res, err := r.db.Query("SELECT * FROM bounties WHERE guild = ?", guild)
+
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	var all []Bounty
+	for res.Next() {
+		var b Bounty
+		if err := res.Scan(&b.CustomID, &b.Guild, &b.Job, &b.Series, &b.Expires, &b.MessageID, &b.Channel); err != nil {
+			return nil, err
+		}
+		all = append(all, b)
+	}
+	return all, nil
+}
+
 // Return all reminders for which current time is after time field
 func (r *SQLiteRepository) GetActiveReminders() ([]Reminder, error) {
 	res, err := r.db.Query("SELECT ROWID, * FROM reminders WHERE time < ?", time.Now().Format("2006-01-02 15:04:05"))
@@ -511,6 +545,23 @@ func (r *SQLiteRepository) RegisteredUser(usr string, guild string) bool {
 
 	//If there was a result, return true
 	return res.Next()
+}
+
+func (r *SQLiteRepository) GetBounty(customID string, guild string) (Bounty, error) {
+	res, err := r.db.Query("SELECT * FROM bounties WHERE customid = ? AND guild = ?", customID, guild)
+
+	if err != nil {
+		return Bounty{}, err
+	}
+	defer res.Close()
+
+	var b Bounty
+	if res.Next() {
+		if err := res.Scan(&b.CustomID, &b.Guild, &b.Job, &b.Series, &b.Expires, &b.MessageID, &b.Channel); err != nil {
+			return Bounty{}, err
+		}
+	}
+	return b, nil
 }
 
 // Check if the given job exists in the database
