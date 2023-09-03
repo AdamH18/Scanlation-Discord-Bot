@@ -772,7 +772,7 @@ var (
 			DefaultMemberPermissions: &adminPerms,
 		},
 
-		// OWNER COMMANDS
+		// GENERAL COMMANDS
 		{
 			Name:                     "add_notification_channel",
 			Description:              "Sets channel to receive messages containing updates from bot owner (admin only)",
@@ -792,6 +792,11 @@ var (
 					Required:    true,
 				},
 			},
+		},
+		{
+			Name:         "check_db",
+			Description:  "Check status of database if commands appear unresponsive",
+			DMPermission: &dmPerms,
 		},
 	}
 
@@ -861,5 +866,6 @@ var (
 
 		"add_notification_channel": AddNotificationChannelHandler,
 		"send_notification":        SendNotificationHandler,
+		"check_db":                 CheckDBHandler,
 	}
 )
