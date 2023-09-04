@@ -120,7 +120,9 @@ func ModifyBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	//modify bounty
 
 	//update bounty in database
-	err = database.Repo.UpdateBounty()
+	database.Repo.UpdateBounty(options["bounty-id"].StringValue(), options["job"].StringValue(), options["series"].StringValue(), options["expires"].IntValue(), i.GuildID)
+	/*Need to update bounty in server*/
+	Respond(s, i, "Successfully modified bounty")
 }
 
 func RemoveBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {

@@ -342,7 +342,7 @@ func (r *SQLiteRepository) UpdateSeriesName(nameSh string, newName string, guild
 	return rows > 0, nil
 }
 
-func (r *SQLiteRepository) UpdateBounty(customID string, newJob string, newSeries string, newExpires time.Time, guild string) (bool, error) {
+func (r *SQLiteRepository) UpdateBounty(customID string, newJob string, newSeries string, newExpires int64, guild string) (bool, error) {
 	res, err := r.BountiesExec("UPDATE bounties SET job = ?, series = ?, expires = ? WHERE customid = ? AND guild = ?", newJob, newSeries, newExpires, customID, guild)
 
 	if err != nil {
