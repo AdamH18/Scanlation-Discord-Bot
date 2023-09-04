@@ -16,6 +16,101 @@ var (
 			DMPermission: &dmPerms,
 		},
 
+		//Bounty commands
+		{
+			Name:                     "add_bounty",
+			Description:              "Add a bounty for a job",
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &adminPerms,
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "custom-id",
+					Description: "Custom ID for bounty, save this somewhere as it will not be displayed on the embed",
+					Required:    true,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "job",
+					Description: "Job to add bounty for",
+					Required:    true,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "series",
+					Description: "Series to add bounty for",
+					Required:    false,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "channel-id",
+					Description: "Channel to send bounty in, if not given bounty will be sent in current channel",
+					Required:    false,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionRole,
+					Name:        "ping-role",
+					Description: "Should the bounty ping a role in the channel?", // if not given the bounty will not ping a role/anyone
+					Required:    false,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionInteger,
+					Name:        "expires-at",
+					Description: "When should the bounty expire? (in seconds)",
+					MinValue:    &daysMin,
+					Required:    false,
+				},
+			},
+		},
+		{
+			Name:                     "modify_bounty",
+			Description:              "Modify a bounty",
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &adminPerms,
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "custom-id",
+					Description: "The custom ID of the bounty to modify",
+					Required:    true,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "job",
+					Description: "Modify the job of the bounty",
+					Required:    false,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "series",
+					Description: "Modify the series of the bounty",
+					Required:    false,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionInteger,
+					Name:        "expires-at",
+					Description: "Modify the expiration time of the bounty (in seconds)",
+					MinValue:    &daysMin,
+					Required:    false,
+				},
+			},
+		},
+
+		{
+			Name:                     "remove_bounty",
+			Description:              "Remove a bounty",
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &adminPerms,
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "custom-id",
+					Description: "The custom ID of the bounty to remove",
+					Required:    true,
+				},
+			},
+		},
+
 		// REMINDER COMMANDS
 		{
 			Name:                     "add_any_reminder",
@@ -803,6 +898,9 @@ var (
 		//TODO: Investigate autocomplete - https://github.com/bwmarrin/discordgo/blob/master/examples/autocomplete/main.go
 		//TODO: Organize by subcommands
 
+		"remove_bounty":    RemoveBountyHandler,
+		"modify_bounty":    ModifyBountyHandler,
+		"add_bounty":       AddBountyHandler,
 		"add_any_reminder": AddAnyReminderHandler,
 		"add_reminder":     AddReminderHandler,
 		"rem_any_reminder": RemAnyReminderHandler,

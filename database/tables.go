@@ -14,6 +14,20 @@ var tableQuerys = []string{
 		time DATETIME
     );
     `,
+	// Create table for Bounty system
+	`
+	CREATE TABLE IF NOT EXISTS bounties(
+		PRIMARY KEY(guild, customid),
+		customid VARCHAR(20) COLLATE NOCASE,
+		guild VARCHAR(20),
+		job VARCHAR(20) COLLATE NOCASE,
+		series VARCHAR(100) COLLATE NOCASE,
+		expires DATETIME,
+		message-id VARCHAR(20),
+		channel VARCHAR(20),
+	);
+	`,
+	// Holds all data for user-created reminders
 	// Registers a series with a short and long name as well as its ping role
 	`
     CREATE TABLE IF NOT EXISTS series(
