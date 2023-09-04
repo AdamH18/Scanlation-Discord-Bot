@@ -17,6 +17,11 @@ var (
 	SeriesCh      chan func() (string, string)
 	AssignmentsCh chan string
 	ColorsCh      chan string
+	ActionsCh     chan bool
+	ErrorsCh      chan func() (string, []any, string)
+
+	DatabaseOps  int
+	DatabaseErrs int
 )
 
 func Start() {
@@ -68,11 +73,17 @@ func Start() {
 	log.Println("Starting backups")
 	go BackupDB()
 
-	//Create channels for billboard updates
+	//Create channels
 	SeriesCh = make(chan func() (string, string))
 	AssignmentsCh = make(chan string)
 	ColorsCh = make(chan string)
-	database.RegisterChannels(SeriesCh, AssignmentsCh, ColorsCh)
+	ActionsCh = make(chan bool)
+	ErrorsCh = make(chan func() (string, []any, string))
+	DatabaseOps = 0
+	DatabaseErrs = 0
+	database.RegisterChannels(SeriesCh, AssignmentsCh, ColorsCh, ActionsCh, ErrorsCh)
+	go TrackDB()
+	go HandlerErrors()
 	go BillboardUpdates()
 }
 

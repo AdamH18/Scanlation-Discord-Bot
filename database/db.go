@@ -12,6 +12,8 @@ var (
 	SeriesCh      chan func() (string, string)
 	AssignmentsCh chan string
 	ColorsCh      chan string
+	ActionsCh     chan bool
+	ErrorsCh      chan func() (string, []any, string)
 )
 
 type SQLiteRepository struct {
@@ -28,7 +30,7 @@ func NewSQLiteRepository(db *sql.DB) *SQLiteRepository {
 func StartDatabase(loc string) {
 	log.Println("Starting database...")
 	// Database locking error fix from API spec
-	db, err := sql.Open("sqlite3", "file:"+loc+"?_mutex=full&_busy_timeout=10000")
+	db, err := sql.Open("sqlite3", "file:"+loc+"?_mutex=full&_busy_timeout=9999999")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -40,8 +42,10 @@ func StartDatabase(loc string) {
 	}
 }
 
-func RegisterChannels(serc chan func() (string, string), assc chan string, colc chan string) {
+func RegisterChannels(serc chan func() (string, string), assc chan string, colc chan string, actc chan bool, errc chan func() (string, []any, string)) {
 	SeriesCh = serc
 	AssignmentsCh = assc
 	ColorsCh = colc
+	ActionsCh = actc
+	ErrorsCh = errc
 }

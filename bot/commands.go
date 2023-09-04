@@ -867,7 +867,7 @@ var (
 			DefaultMemberPermissions: &adminPerms,
 		},
 
-		// OWNER COMMANDS
+		// GENERAL COMMANDS
 		{
 			Name:                     "add_notification_channel",
 			Description:              "Sets channel to receive messages containing updates from bot owner (admin only)",
@@ -888,6 +888,11 @@ var (
 				},
 			},
 		},
+		{
+			Name:         "check_db",
+			Description:  "Check status of database if commands appear unresponsive",
+			DMPermission: &dmPerms,
+		},
 	}
 
 	//Map to link slash commands to their handler
@@ -897,6 +902,7 @@ var (
 
 		//TODO: Investigate autocomplete - https://github.com/bwmarrin/discordgo/blob/master/examples/autocomplete/main.go
 		//TODO: Organize by subcommands
+		//TODO: Improve output to user on bad input
 
 		"remove_bounty":    RemoveBountyHandler,
 		"modify_bounty":    ModifyBountyHandler,
@@ -959,5 +965,6 @@ var (
 
 		"add_notification_channel": AddNotificationChannelHandler,
 		"send_notification":        SendNotificationHandler,
+		"check_db":                 CheckDBHandler,
 	}
 )

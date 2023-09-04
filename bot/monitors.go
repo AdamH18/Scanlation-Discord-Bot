@@ -21,13 +21,10 @@ func SendReminder(rem database.Reminder) error {
 	if rem.Repeat {
 		//If supposed to repeat, add defined number of days to DB time for next reminder
 		message = message + fmt.Sprintf("\n\nMessage is set to repeat. If no longer needed, delete using ID %d", rem.ID)
-		err = database.Repo.ResetReminder(int64(rem.ID))
+		go database.Repo.ResetReminder(int64(rem.ID))
 	} else {
 		//If not supposed to repeat, just delete
-		_, err = database.Repo.RemoveReminder(int64(rem.ID), rem.Guild)
-	}
-	if err != nil {
-		return err
+		go database.Repo.RemoveReminder(int64(rem.ID), rem.Guild)
 	}
 	//Actually send the message
 	_, err = goBot.ChannelMessageSend(rem.Channel, message)
@@ -109,6 +106,54 @@ func BackupDB() {
 			return
 		case <-ticker.C:
 			DoBackup()
+		}
+	}
+}
+
+// Tracks pending insertions into the database
+func TrackDB() {
+	var out bool
+	quitV := false
+	for {
+		select {
+		case <-quit:
+			log.Printf("Will close after all DB changes are completed. Changes left: %d\n", DatabaseOps)
+			quitV = true
+		case out = <-ActionsCh:
+			if out {
+				DatabaseOps++
+			} else {
+				DatabaseOps--
+			}
+		}
+		if quitV && DatabaseOps == 0 {
+			return
+		}
+	}
+}
+
+// Notifies owner of database errors
+func HandlerErrors() {
+	var vals func() (string, []any, string)
+	quitV := false
+	for {
+		select {
+		case <-quit:
+			quitV = true
+		case vals = <-ErrorsCh:
+			DatabaseErrs++
+			query, extras, err := vals()
+			ch, chErr := goBot.UserChannelCreate(config.Owner)
+			if chErr != nil {
+				log.Println("Error getting channel of owner DM: " + chErr.Error())
+			}
+			_, chErr = goBot.ChannelMessageSend(ch.ID, fmt.Sprintf("Error on query %s with args %v - %s", query, extras, err))
+			if chErr != nil {
+				log.Println("Error sending error notification DM to owner: " + chErr.Error())
+			}
+		}
+		if quitV && DatabaseOps == 0 {
+			return
 		}
 	}
 }
