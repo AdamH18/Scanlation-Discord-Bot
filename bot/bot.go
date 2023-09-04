@@ -85,6 +85,8 @@ func Start() {
 	go TrackDB()
 	go HandlerErrors()
 	go BillboardUpdates()
+
+	goBot.UpdateListeningStatus("my Fans")
 }
 
 func Stop() {

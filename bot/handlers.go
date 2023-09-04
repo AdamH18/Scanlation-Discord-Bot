@@ -93,6 +93,64 @@ func AddBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	b.Job = options["job"].StringValue()
 	b.Series = options["series"].StringValue()
 	b.Expires = options["expires"].IntValue()
+	if (options["channel"] != nil){
+		b.Channel = options["channel"].StringValue()
+	} else {
+		b.Channel = i.ChannelID
+	}
+	
+
+	log.Printf("Bounty-ID: %s Job: %s Series: %s Expires: %d", bountyID, b.Job, b.Series, b.Expires)
+
+	
+	Respond(s, i, "Adding bounty")
+	//send bounty to server
+
+	go database.Repo.AddBounty(b)
+}
+
+//returns message id of bounty embed
+func AddBountyToServer(s *discordgo.Session, i *discordgo.InteractionCreate, b database.Bounty)  (string, error){
+	//Use an embed to send bounty to server and add button to show interest
+	embed := BuildBountyEmbed(b)
+	//create buttons
+	buttons := BuildBountyButtons(b.CustomID)
+
+	
+	//send to specified channel and add buttons to it
+	msg, err := s.ChannelMessageSendComplex(b.Channel, &discordgo.MessageSend{
+		Content: "New Bounty!!!",
+	},
+
+	return msg.ID, err
+}
+//returns button for bounty embed
+func BuildBountyButtons(bountyID string) []*discordgo.Button {
+	return []*discordgo.Button{
+		{
+			Label : "Click Me If Your Interested",
+			Style : discordgo.SuccessButton,
+			CustomID : "interset_" + bountyID,
+		},
+}
+}
+
+func BuildBountyEmbed(b database.Bounty) *discordgo.MessageEmbed {
+	embed := &discordgo.MessageEmbed{
+		Title:       "Job: " + b.Job,
+		Description: "Series: " + b.Series + "\nExpires: " + convertToRelativeTimeStamp(b.Expires),
+		Color:       0x00ff00,
+	}
+	return embed
+}
+
+func convertToRelativeTimeStamp(h int64) string {
+	//grab current time in Unix
+	now := time.Now().Unix()
+	//add seconds to current time
+	now = now + (h)
+	//convert to relative timestamp
+	return "<t:" + strconv.FormatInt(now, 10) + ":f>"
 }
 
 func ModifyBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {

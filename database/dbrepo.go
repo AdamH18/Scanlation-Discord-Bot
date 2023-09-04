@@ -29,6 +29,10 @@ func (r *SQLiteRepository) AddReminder(rem Reminder) {
 	r.RemindersExec("INSERT INTO reminders(guild, channel, user, days, message, repeat, time) values(?, ?, ?, ?, ?, ?, ?)", rem.Guild, rem.Channel, rem.User, days, rem.Message, rem.Repeat, rem.Time)
 }
 
+func (r *SQLiteRepository) AddBounty(b Bounty) {
+	r.BountiesExec("INSERT INTO bounties(customid, guild, job, series, expires, message-id, channel) values(?, ?, ?, ?, ?, ?, ?)", b.CustomID, b.Guild, b.Job, b.Series, b.Expires, b.MessageID, b.Channel)
+}
+
 // Add series entry to DB
 func (r *SQLiteRepository) AddSeries(ser Series) {
 	r.SeriesExec(ser.Guild, "INSERT INTO series(name_sh, name_full, guild, ping_role, repo_link) values(?, ?, ?, ?, ?)", strings.ToLower(ser.NameSh), ser.NameFull, ser.Guild, ser.PingRole, ser.RepoLink)
