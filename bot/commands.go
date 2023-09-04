@@ -807,6 +807,7 @@ var (
 
 		//TODO: Investigate autocomplete - https://github.com/bwmarrin/discordgo/blob/master/examples/autocomplete/main.go
 		//TODO: Organize by subcommands
+		//TODO: Improve output to user on bad input
 
 		"add_any_reminder": AddAnyReminderHandler,
 		"add_reminder":     AddReminderHandler,

@@ -18,7 +18,6 @@ func (r *SQLiteRepository) ExecwError(query string, args ...any) sql.Result {
 	ActionsCh <- false
 	if err == nil {
 		log.Printf("Query %s with args %v succeeded\n", query, args)
-		ErrorsCh <- func() (string, []any, string) { return query, args, "Testing" }
 		return res
 	}
 

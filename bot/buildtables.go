@@ -70,6 +70,10 @@ func BuildHelpEmbed() *discordgo.MessageEmbed {
 					"**rem_vanity_role** - Get rid of your vanity role. Never actually deletes it from the server\n" +
 					"**my_settings** - Gives you an overview of all your settings in this server",
 			},
+			{
+				Name:  "Misc:",
+				Value: "**check_db** - Check the current status of the database",
+			},
 		},
 	}
 	return &embed

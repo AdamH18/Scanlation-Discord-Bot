@@ -117,6 +117,7 @@ func TrackDB() {
 	for {
 		select {
 		case <-quit:
+			log.Printf("Will close after all DB changes are completed. Changes left: %d\n", DatabaseOps)
 			quitV = true
 		case out = <-ActionsCh:
 			if out {
