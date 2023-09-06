@@ -20,7 +20,6 @@ var (
 		{
 			Name:                     "add_bounty",
 			Description:              "Add a bounty for a job",
-			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &adminPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{

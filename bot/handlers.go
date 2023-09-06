@@ -93,53 +93,78 @@ func AddBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	b.Job = options["job"].StringValue()
 	b.Series = options["series"].StringValue()
 	b.Expires = options["expires"].IntValue()
-	if (options["channel"] != nil){
+	if options["channel"] != nil {
 		b.Channel = options["channel"].StringValue()
 	} else {
 		b.Channel = i.ChannelID
 	}
-	
 
 	log.Printf("Bounty-ID: %s Job: %s Series: %s Expires: %d", bountyID, b.Job, b.Series, b.Expires)
 
-	
-	Respond(s, i, "Adding bounty")
 	//send bounty to server
 
 	go database.Repo.AddBounty(b)
 }
 
-//returns message id of bounty embed
-func AddBountyToServer(s *discordgo.Session, i *discordgo.InteractionCreate, b database.Bounty)  (string, error){
+// returns message id of bounty embed
+func AddBountyToServer(s *discordgo.Session, i *discordgo.InteractionCreate, b database.Bounty) (string, error) {
+	options := OptionsToMap(i.ApplicationCommandData().Options)
 	//Use an embed to send bounty to server and add button to show interest
 	embed := BuildBountyEmbed(b)
 	//create buttons
-	buttons := BuildBountyButtons(b.CustomID)
+	buttons := BuildBountyButtons(b.CustomID, false)
 
-	
-	//send to specified channel and add buttons to it
-	msg, err := s.ChannelMessageSendComplex(b.Channel, &discordgo.MessageSend{
-		Content: "New Bounty!!!",
-	},
-
-	return msg.ID, err
+	//send to specified channel and add buttons to it (add role ping if specified)
+	if options["ping-role"] != nil {
+		msg, err := s.ChannelMessageSendComplex(b.Channel, &discordgo.MessageSend{
+			Content: "New Bounty! <@&" + options["ping-role"].RoleValue(s, i.GuildID).ID + ">",
+			Embed:   embed,
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{
+					Components: []discordgo.MessageComponent{
+						buttons[0],
+					},
+				},
+			},
+		})
+		return msg.ID, err
+	} else { //if a ping role is not specified, don't ping
+		msg, err := s.ChannelMessageSendComplex(b.Channel, &discordgo.MessageSend{
+			Content: "New Bounty!",
+			Embed:   embed,
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{
+					Components: []discordgo.MessageComponent{
+						buttons[0],
+					},
+				},
+			},
+		})
+		return msg.ID, err
+	}
 }
-//returns button for bounty embed
-func BuildBountyButtons(bountyID string) []*discordgo.Button {
+
+// returns button for bounty embed
+func BuildBountyButtons(bountyID string, disabled bool) []*discordgo.Button {
 	return []*discordgo.Button{
 		{
-			Label : "Click Me If Your Interested",
-			Style : discordgo.SuccessButton,
-			CustomID : "interset_" + bountyID,
+			Emoji: discordgo.ComponentEmoji{
+				Name: "👍",
+			},
+			Label:    "Click Me If Your Interested",
+			Style:    discordgo.SuccessButton,
+			CustomID: "interset_" + bountyID,
+			//upon expiring disable button
+			Disabled: disabled,
 		},
-}
+	}
 }
 
 func BuildBountyEmbed(b database.Bounty) *discordgo.MessageEmbed {
 	embed := &discordgo.MessageEmbed{
 		Title:       "Job: " + b.Job,
 		Description: "Series: " + b.Series + "\nExpires: " + convertToRelativeTimeStamp(b.Expires),
-		Color:       0x00ff00,
+		Color:/*color red */ 0xff0000,
 	}
 	return embed
 }
