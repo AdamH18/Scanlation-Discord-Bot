@@ -102,8 +102,17 @@ func AddBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	log.Printf("Bounty-ID: %s Job: %s Series: %s Expires: %d", bountyID, b.Job, b.Series, b.Expires)
 
 	//send bounty to server
-
+	msgID, err := AddBountyToServer(s, i, b)
+	if err != nil {
+		Respond(s, i, "Error sending bounty to server: "+err.Error()+"\n😢 Did I mess up?")
+		return
+	}
+	b.MessageID = msgID
+	//add bounty to database
 	go database.Repo.AddBounty(b)
+
+	Respond(s, i, "Successfully added bounty! Good job Shriataki! You've earned a cookie!")
+
 }
 
 // returns message id of bounty embed
@@ -184,6 +193,7 @@ func ModifyBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	options := OptionsToMap(i.ApplicationCommandData().Options)
 	bountyID := options["bounty-id"].StringValue()
 	b, err := database.Repo.GetBounty(bountyID, i.GuildID)
+	//look compiler I know this is bad but I don't care
 	if err != nil {
 		Respond(s, i, "Error retrieving bounty from database: "+err.Error())
 		return
@@ -193,7 +203,7 @@ func ModifyBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	//update bounty in database
 	database.Repo.UpdateBounty(options["bounty-id"].StringValue(), options["job"].StringValue(), options["series"].StringValue(), options["expires"].IntValue(), i.GuildID)
 	/*Need to update bounty in server*/
-	Respond(s, i, "Successfully modified bounty")
+	Respond(s, i, "Successfully modified bounty! Good job "+i.Member.User.Username+"!")
 }
 
 func RemoveBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
