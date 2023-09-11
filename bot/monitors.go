@@ -18,13 +18,14 @@ func SendReminder(rem database.Reminder) error {
 	}
 
 	message := fmt.Sprintf("Reminder for %s: %s", ping, rem.Message)
+	ch := make(chan (int), 1)
 	if rem.Repeat {
 		//If supposed to repeat, add defined number of days to DB time for next reminder
 		message = message + fmt.Sprintf("\n\nMessage is set to repeat. If no longer needed, delete using ID %d", rem.ID)
 		go database.Repo.ResetReminder(int64(rem.ID))
 	} else {
 		//If not supposed to repeat, just delete
-		go database.Repo.RemoveReminder(int64(rem.ID), rem.Guild)
+		go database.Repo.RemoveReminder(ch, int64(rem.ID), rem.Guild)
 	}
 	//Actually send the message
 	_, err = goBot.ChannelMessageSend(rem.Channel, message)

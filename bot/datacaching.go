@@ -10,6 +10,8 @@ var (
 	UserPings    map[KeyStruct]string
 	RolePings    map[KeyStruct]string
 	ChannelPings map[string]string
+	ChannelNames map[string]string
+	GuildNames   map[string]string
 )
 
 // Needed to use guild-user/role IDs together for map keys
@@ -34,6 +36,8 @@ func InitializeCache() {
 	UserPings = make(map[KeyStruct]string)
 	RolePings = make(map[KeyStruct]string)
 	ChannelPings = make(map[string]string)
+	ChannelNames = make(map[string]string)
+	GuildNames = make(map[string]string)
 }
 
 // Takes a user ID and returns the username
@@ -52,6 +56,7 @@ func GetUserName(guildID string, userID string) (string, error) {
 	}
 	//Cache returned name
 	Usernames[KeyStruct{Guild: guildID, Data: userID}] = usr.User.Username
+	UserPings[KeyStruct{Guild: guildID, Data: userID}] = usr.Mention()
 	return usr.User.Username, nil
 }
 
@@ -71,6 +76,7 @@ func GetUserPing(guildID string, userID string) (string, error) {
 	}
 	//Cache returned ping
 	UserPings[KeyStruct{Guild: guildID, Data: userID}] = usr.Mention()
+	Usernames[KeyStruct{Guild: guildID, Data: userID}] = usr.User.Username
 	return usr.Mention(), nil
 }
 
@@ -110,5 +116,37 @@ func GetChannelPing(channelID string) (string, error) {
 	}
 	//Cache returned channel
 	ChannelPings[channelID] = channel.Mention()
+	ChannelNames[channelID] = channel.Name
 	return channel.Mention(), nil
+}
+
+// Takes a channel ID and returns a ping string
+func GetGuildName(guildID string) (string, error) {
+	//Check if cached before asking Discord
+	if _, ok := GuildNames[guildID]; ok {
+		return GuildNames[guildID], nil
+	}
+	guild, err := goBot.Guild(guildID)
+	if err != nil {
+		return "", err
+	}
+	//Cache returned guild
+	GuildNames[guildID] = guild.Name
+	return guild.Name, nil
+}
+
+// Takes a channel ID and returns a ping string
+func GetChannelName(channelID string) (string, error) {
+	//Check if cached before asking Discord
+	if _, ok := ChannelNames[channelID]; ok {
+		return ChannelNames[channelID], nil
+	}
+	channel, err := goBot.Channel(channelID)
+	if err != nil {
+		return "", err
+	}
+	//Cache returned channel
+	ChannelNames[channelID] = channel.Name
+	ChannelPings[channelID] = channel.Mention()
+	return channel.Name, nil
 }
