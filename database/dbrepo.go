@@ -36,7 +36,7 @@ func (r *SQLiteRepository) AddReminder(ch chan (int), rem Reminder) {
 }
 
 func (r *SQLiteRepository) AddBounty(b Bounty) {
-	r.BountiesExec("INSERT INTO bounties(customid, guild, job, series, expires, message-id, channel) values(?, ?, ?, ?, ?, ?, ?)", b.CustomID, b.Guild, b.Job, b.Series, b.Expires, b.MessageID, b.Channel)
+	r.BountiesExec("INSERT INTO bounties(customid, guild, job, series, expires, messageid, channel) values(?, ?, ?, ?, ?, ?, ?)", b.CustomID, b.Guild, b.Job, b.Series, b.Expires, b.MessageID, b.Channel)
 }
 
 // Add series entry to DB

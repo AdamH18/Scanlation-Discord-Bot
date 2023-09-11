@@ -99,7 +99,11 @@ func AddBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	b.CustomID = bountyID
 	b.Guild = i.GuildID
 	b.Job = options["job"].StringValue()
-	b.Series = options["series"].StringValue()
+	if options["series"] == nil {
+		b.Series = "None"
+	} else {
+		b.Series = options["series"].StringValue()
+	}
 	b.Expires = options["expires"].IntValue()
 	if options["channel"] != nil {
 		b.Channel = options["channel"].StringValue()
@@ -186,13 +190,9 @@ func BuildBountyEmbed(b database.Bounty) *discordgo.MessageEmbed {
 	return embed
 }
 
-func convertToRelativeTimeStamp(h int64) string {
-	//grab current time in Unix
-	now := time.Now().Unix()
-	//add seconds to current time
-	now = now + (h)
+func convertToRelativeTimeStamp(now int64) string {
 	//convert to relative timestamp
-	return "<t:" + strconv.FormatInt(now, 10) + ":f>"
+	return "<t:" + strconv.FormatInt(now, 10) + ":R>"
 }
 
 func ModifyBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -200,16 +200,13 @@ func ModifyBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	//retrieve bounty from database
 	options := OptionsToMap(i.ApplicationCommandData().Options)
 	bountyID := options["bounty-id"].StringValue()
-	b, err := database.Repo.GetBounty(bountyID, i.GuildID)
-	//look compiler I know this is bad but I don't care
+	//update bounty in database
+	b, err := database.Repo.UpdateBounty(bountyID, options["job"].StringValue(), options["series"].StringValue(), options["expires"].IntValue(), i.GuildID)
 	if err != nil {
-		Respond(s, i, "Error retrieving bounty from database: "+err.Error())
+		Respond(s, i, "Error updating bounty in database: "+err.Error()+"\n😢 Did I mess up?")
 		return
 	}
-	//modify bounty
-
-	//update bounty in database
-	database.Repo.UpdateBounty(options["bounty-id"].StringValue(), options["job"].StringValue(), options["series"].StringValue(), options["expires"].IntValue(), i.GuildID)
+	log.Printf("Modified Bounty: %v", b)
 	/*Need to update bounty in server*/
 	Respond(s, i, "Successfully modified bounty! Good job "+i.Member.User.Username+"!")
 }
