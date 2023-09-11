@@ -86,7 +86,7 @@ func Start() {
 	go HandlerErrors()
 	go BillboardUpdates()
 
-	goBot.UpdateListeningStatus("my Fans")
+	goBot.UpdateListeningStatus("My Fans")
 }
 
 func Stop() {

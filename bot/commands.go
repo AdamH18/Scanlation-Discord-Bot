@@ -29,9 +29,17 @@ var (
 					Required:    true,
 				},
 				{
+					//change to title
 					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "job",
-					Description: "Job to add bounty for",
+					Name:        "title",
+					Description: "Title of the bounty (Ex: Typesetter needed for [Series])",
+					Required:    true,
+				},
+				//add description option
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "description",
+					Description: "Description of the bounty (Ex: Chapter 2 needs a typesetter)",
 					Required:    true,
 				},
 				{
@@ -51,7 +59,7 @@ var (
 					Type:        discordgo.ApplicationCommandOptionRole,
 					Name:        "ping-role",
 					Description: "Should the bounty ping a role in the channel?", // if not given the bounty will not ping a role/anyone
-					Required:    true,
+					Required:    false,
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
@@ -965,5 +973,8 @@ var (
 		"add_notification_channel": AddNotificationChannelHandler,
 		"send_notification":        SendNotificationHandler,
 		"check_db":                 CheckDBHandler,
+	}
+	componentHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, identifier string){
+		"interest": BountyButtonClickHandler,
 	}
 )

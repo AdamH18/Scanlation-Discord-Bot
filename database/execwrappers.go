@@ -101,6 +101,10 @@ func (r *SQLiteRepository) BountiesExec(query string, args ...any) (sql.Result, 
 	return r.ExecwError(query, args...), nil
 }
 
+func (r *SQLiteRepository) BountyInterestExec(query string, args ...any) sql.Result {
+	return r.ExecwError(query, args...)
+}
+
 // Changing the assignments table can affect assignments and series billboards
 func (r *SQLiteRepository) SeriesAssignmentsExec(guild string, query string, args ...any) sql.Result {
 	res := r.ExecwError(query, args...)

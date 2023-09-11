@@ -29,6 +29,11 @@ type Bounty struct {
 	Channel   string
 }
 
+type BountyInterest struct {
+	CustomID string
+	User     string
+}
+
 type Series struct {
 	NameSh   string
 	NameFull string

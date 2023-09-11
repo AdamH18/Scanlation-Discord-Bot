@@ -39,6 +39,10 @@ func (r *SQLiteRepository) AddBounty(b Bounty) {
 	r.BountiesExec("INSERT INTO bounties(customid, guild, job, series, expires, messageid, channel) values(?, ?, ?, ?, ?, ?, ?)", b.CustomID, b.Guild, b.Job, b.Series, b.Expires, b.MessageID, b.Channel)
 }
 
+func (r *SQLiteRepository) AddInterestedUser(b Bounty, userid string) {
+	r.BountyInterestExec("INSERT INTO bounty_interest(customid, user) values(?, ?)", b.CustomID, userid)
+}
+
 // Add series entry to DB
 func (r *SQLiteRepository) AddSeries(ch chan (int), ser Series) {
 	defer close(ch)
@@ -164,6 +168,10 @@ func (r *SQLiteRepository) RemoveBounty(customID string, guild string) int64 {
 		return -1
 	}
 	return rows
+}
+
+func (r *SQLiteRepository) RemoveInterestedUser(b Bounty, userid string) {
+	r.BountyInterestExec("DELETE FROM bounty_interest WHERE customid = ? AND user = ?", b.CustomID, userid)
 }
 
 // Remove reminder entry by ID

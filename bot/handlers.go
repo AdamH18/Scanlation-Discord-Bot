@@ -12,6 +12,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+//button handler for bounty embed
+
 func HelpHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	LogCommand(i, "help")
 	helpEmbed := BuildHelpEmbed()
@@ -94,17 +96,17 @@ func AddBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	LogCommand(i, "add_bounty")
 	//Compiling values into Bounty struct
 	options := OptionsToMap(i.ApplicationCommandData().Options)
-	bountyID := options["bounty-id"].StringValue()
+	bountyID := options["custom-id"].StringValue()
 	var b database.Bounty
 	b.CustomID = bountyID
 	b.Guild = i.GuildID
-	b.Job = options["job"].StringValue()
+	b.Job = options["title"].StringValue()
 	if options["series"] == nil {
 		b.Series = "None"
 	} else {
 		b.Series = options["series"].StringValue()
 	}
-	b.Expires = options["expires"].IntValue()
+	b.Expires = options["expires-at"].IntValue()
 	if options["channel"] != nil {
 		b.Channel = options["channel"].StringValue()
 	} else {
@@ -127,18 +129,33 @@ func AddBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 }
 
+func BountyButtonClickHandler(s *discordgo.Session, i *discordgo.InteractionCreate, customID string) {
+	LogCommand(i, "bounty_button_click")
+	//retrieve bounty from database
+	b, err := database.Repo.GetBounty(customID, i.GuildID) //something is wrong here
+	/*Response: Error retrieving bounty from database: sql: Scan error on column index 4, name "job": converting driver.Value type string ("test") to a int64: invalid syntax */
+	if err != nil {
+		Respond(s, i, "Error retrieving bounty from database: "+"\n😢 Did I mess up?")
+		return
+	}
+	log.Printf("Bounty: %v", b)
+	//save interest to database
+	go database.Repo.AddInterestedUser(b, i.Member.User.ID)
+	Respond(s, i, "You've shown interest in this bounty!")
+}
+
 // returns message id of bounty embed
 func AddBountyToServer(s *discordgo.Session, i *discordgo.InteractionCreate, b database.Bounty) (string, error) {
 	options := OptionsToMap(i.ApplicationCommandData().Options)
 	//Use an embed to send bounty to server and add button to show interest
-	embed := BuildBountyEmbed(b)
+	embed := BuildBountyEmbed(b, options["description"].StringValue())
 	//create buttons
 	buttons := BuildBountyButtons(b.CustomID, false)
 
 	//send to specified channel and add buttons to it (add role ping if specified)
 	if options["ping-role"] != nil {
 		msg, err := s.ChannelMessageSendComplex(b.Channel, &discordgo.MessageSend{
-			Content: "New Bounty! <@&" + options["ping-role"].RoleValue(s, i.GuildID).ID + ">",
+			Content: "New Bounty! " + options["ping-role"].RoleValue(s, i.GuildID).Mention(),
 			Embed:   embed,
 			Components: []discordgo.MessageComponent{
 				discordgo.ActionsRow{
@@ -174,17 +191,29 @@ func BuildBountyButtons(bountyID string, disabled bool) []*discordgo.Button {
 			},
 			Label:    "Click Me If Your Interested",
 			Style:    discordgo.SuccessButton,
-			CustomID: "interset_" + bountyID,
+			CustomID: "interest " + bountyID,
 			//upon expiring disable button
 			Disabled: disabled,
 		},
 	}
 }
 
-func BuildBountyEmbed(b database.Bounty) *discordgo.MessageEmbed {
+func BuildBountyEmbed(b database.Bounty, d string) *discordgo.MessageEmbed {
 	embed := &discordgo.MessageEmbed{
-		Title:       "Job: " + b.Job,
-		Description: "Series: " + b.Series + "\nExpires: " + convertToRelativeTimeStamp(b.Expires),
+		Title:       b.Job,
+		Description: d,
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:   "Series",
+				Value:  b.Series,
+				Inline: true,
+			},
+			{
+				Name:   "Expires On",
+				Value:  convertToRelativeTimeStamp(b.Expires),
+				Inline: true,
+			},
+		},
 		Color:/*color red */ 0xff0000,
 	}
 	return embed
@@ -1466,8 +1495,17 @@ func CheckDBHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 // Creates handlers for all slash commands based on relationship defined in commandHandlers
 func CreateHandlers() {
 	goBot.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
-			h(s, i)
+		switch i.Type {
+		case discordgo.InteractionApplicationCommand:
+			if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
+				h(s, i)
+			}
+
+		case discordgo.InteractionMessageComponent:
+			func_router, identifier := strings.Split(i.MessageComponentData().CustomID, " ")[0], strings.Split(i.MessageComponentData().CustomID, " ")[1]
+			if h, ok := componentHandlers[func_router]; ok {
+				h(s, i, identifier)
+			}
 		}
 	})
 }

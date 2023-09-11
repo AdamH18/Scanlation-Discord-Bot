@@ -55,6 +55,21 @@ func RespondEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, response
 	})
 }
 
+func DeferResponse(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
+}
+
+func DeferResponseNonEph(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+	})
+}
+
 // Standardized logging of command calls
 func LogCommand(i *discordgo.InteractionCreate, name string) {
 	var g1, g2, c1, c2 string
