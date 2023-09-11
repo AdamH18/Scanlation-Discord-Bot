@@ -213,6 +213,36 @@ func ModifyBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 func RemoveBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	LogCommand(i, "remove_bounty")
+	//retrieve bounty from database
+	options := OptionsToMap(i.ApplicationCommandData().Options)
+	bountyID := options["bounty-id"].StringValue()
+	// retrieve bounty from database
+	b, err := database.Repo.GetBounty(bountyID, i.GuildID)
+	if err != nil {
+		Respond(s, i, "Error retrieving bounty from database: "+err.Error()+"\n😢 Did I mess up?")
+		return
+	}
+	log.Printf("Removing Bounty: %v", b)
+
+	//remove bounty from server
+	err = RemoveBountyFromServer(s, i, b)
+	if err != nil {
+		Respond(s, i, "Unable to delete bounty embed from server: "+err.Error()+"\n😢 Did I mess up?")
+		return
+	}
+	//remove bounty from database
+	res := database.Repo.RemoveBounty(bountyID, i.GuildID)
+	if res == -1 {
+		Respond(s, i, "Unable to delete bounty from database: "+err.Error()+"\n😢 Try again later.")
+		return
+	}
+	Respond(s, i, "Successfully removed bounty!")
+}
+
+func RemoveBountyFromServer(s *discordgo.Session, i *discordgo.InteractionCreate, b database.Bounty) error {
+	//remove bounty from server
+	err := s.ChannelMessageDelete(b.Channel, b.MessageID)
+	return err
 }
 
 // Handler for rem_any_reminder
