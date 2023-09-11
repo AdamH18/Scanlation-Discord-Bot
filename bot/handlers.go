@@ -230,7 +230,7 @@ func RemoveBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		Respond(s, i, "Unable to delete bounty embed from server: "+err.Error()+"\n😢 Did I mess up?")
 		return
 	}
-	//remove bounty from database
+	//remove bounty from database (this needs to be monitored for errors)
 	res := database.Repo.RemoveBounty(bountyID, i.GuildID)
 	if res == -1 {
 		Respond(s, i, "Unable to delete bounty from database: "+err.Error()+"\n😢 Try again later.")

@@ -149,6 +149,23 @@ func (r *SQLiteRepository) AddNotificationChannel(ch chan (int), cha Notificatio
 	}
 }
 
+// fix this
+func (r *SQLiteRepository) RemoveBounty(customID string, guild string) int64 {
+
+	res, err := r.BountiesExec("DELETE FROM bounties WHERE customid = ? AND guild = ?", customID, guild)
+	if err != nil {
+		log.Printf("Error removing bounty: %s\n", err)
+		return -1
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		log.Println("RowsAffected() error: " + err.Error())
+		return -1
+	}
+	return rows
+}
+
 // Remove reminder entry by ID
 func (r *SQLiteRepository) RemoveReminder(ch chan (int), id int64, guild string) {
 	defer close(ch)
