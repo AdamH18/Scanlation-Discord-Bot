@@ -14,15 +14,43 @@ var (
 	ColorsCh      chan string
 	ActionsCh     chan bool
 	ErrorsCh      chan func() (string, []any, string)
+
+	DBWriterCh chan ExecIn
+	Quit       chan struct{}
 )
 
 type SQLiteRepository struct {
 	db *sql.DB
 }
 
+type ExecIn struct {
+	quer string
+	vals []any
+	ch   chan ExecOut
+}
+
+type ExecOut struct {
+	res sql.Result
+	err error
+}
+
 func NewSQLiteRepository(db *sql.DB) *SQLiteRepository {
 	return &SQLiteRepository{
 		db: db,
+	}
+}
+
+// Handle all database executions in series rather than parallel
+func DBWriter() {
+	for {
+		select {
+		case <-Quit:
+			return
+		case exe := <-DBWriterCh:
+			out := ExecOut{}
+			out.res, out.err = Repo.db.Exec(exe.quer, exe.vals...)
+			exe.ch <- out
+		}
 	}
 }
 
@@ -40,12 +68,16 @@ func StartDatabase(loc string) {
 	if err := Repo.Initialize(); err != nil {
 		log.Fatal(err)
 	}
+
+	DBWriterCh = make(chan ExecIn)
+	go DBWriter()
 }
 
-func RegisterChannels(serc chan func() (string, string), assc chan string, colc chan string, actc chan bool, errc chan func() (string, []any, string)) {
+func RegisterChannels(serc chan func() (string, string), assc chan string, colc chan string, actc chan bool, errc chan func() (string, []any, string), quit chan struct{}) {
 	SeriesCh = serc
 	AssignmentsCh = assc
 	ColorsCh = colc
 	ActionsCh = actc
 	ErrorsCh = errc
+	Quit = quit
 }
