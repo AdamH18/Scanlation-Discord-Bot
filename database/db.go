@@ -50,6 +50,7 @@ func DBWriter() {
 			out := ExecOut{}
 			out.res, out.err = Repo.db.Exec(exe.quer, exe.vals...)
 			exe.ch <- out
+			close(exe.ch)
 		}
 	}
 }

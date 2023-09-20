@@ -359,44 +359,60 @@ func (r *SQLiteRepository) UpdateSeriesRepoLink(ch chan (int), nameSh string, ne
 func (r *SQLiteRepository) UpdateColor(ch chan (int), user string, color string, guild string) {
 	defer close(ch)
 	res := r.UsersExec(guild, "UPDATE users SET color = ? WHERE user = ? AND guild = ?", color, user, guild)
-	if res != nil {
-		ch <- 0
-	} else {
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		log.Println("RowsAffected() error: " + err.Error())
 		ch <- -1
+		return
 	}
+
+	ch <- int(rows)
 }
 
 // Update user's vanity role to new one
 func (r *SQLiteRepository) UpdateVanityRole(ch chan (int), user string, role string, guild string) {
 	defer close(ch)
 	res := r.UsersExec(guild, "UPDATE users SET vanity_role = ? WHERE user = ? AND guild = ?", role, user, guild)
-	if res != nil {
-		ch <- 0
-	} else {
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		log.Println("RowsAffected() error: " + err.Error())
 		ch <- -1
+		return
 	}
+
+	ch <- int(rows)
 }
 
 // Add update top of series channels entry
 func (r *SQLiteRepository) UpdateSeriesChannelsTop(ch chan (int), cat string, guild string) {
 	defer close(ch)
 	res := r.SeriesChannelsExec("UPDATE series_channels SET top = ? WHERE guild = ?", cat, guild)
-	if res != nil {
-		ch <- 0
-	} else {
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		log.Println("RowsAffected() error: " + err.Error())
 		ch <- -1
+		return
 	}
+
+	ch <- int(rows)
 }
 
 // Add update bottom of series channels entry
 func (r *SQLiteRepository) UpdateSeriesChannelsBottom(ch chan (int), cat string, guild string) {
 	defer close(ch)
 	res := r.SeriesChannelsExec("UPDATE series_channels SET bottom = ? WHERE guild = ?", cat, guild)
-	if res != nil {
-		ch <- 0
-	} else {
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		log.Println("RowsAffected() error: " + err.Error())
 		ch <- -1
+		return
 	}
+
+	ch <- int(rows)
 }
 
 // Take expired reminder and add days field to alarm time to set next reminder
