@@ -14,7 +14,16 @@ know that they should update (mostly billboards). Updates are sent using preregi
 
 func (r *SQLiteRepository) ExecwError(query string, args ...any) sql.Result {
 	ActionsCh <- true
-	res, err := r.db.Exec(query, args...)
+	//Send execution over to single threaded execution handler
+	results := make(chan ExecOut)
+	DBWriterCh <- ExecIn{
+		quer: query,
+		vals: args,
+		ch:   results,
+	}
+	out := <-results
+	res := out.res
+	err := out.err
 	ActionsCh <- false
 	if err == nil {
 		log.Printf("Query %s with args %v succeeded\n", query, args)

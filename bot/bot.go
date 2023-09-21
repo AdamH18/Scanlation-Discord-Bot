@@ -81,7 +81,7 @@ func Start() {
 	ErrorsCh = make(chan func() (string, []any, string))
 	DatabaseOps = 0
 	DatabaseErrs = 0
-	database.RegisterChannels(SeriesCh, AssignmentsCh, ColorsCh, ActionsCh, ErrorsCh)
+	database.RegisterChannels(SeriesCh, AssignmentsCh, ColorsCh, ActionsCh, ErrorsCh, quit)
 	go TrackDB()
 	go HandlerErrors()
 	go BillboardUpdates()
