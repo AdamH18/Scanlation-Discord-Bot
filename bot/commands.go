@@ -118,6 +118,20 @@ var (
 			},
 		},
 
+		{
+			Name: show_interested_users,
+			Description: "Show all users interested in a bounty",
+			DefaultMemberPermissions: &adminPerms,
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "custom-id",
+					Description: "The custom ID of the bounty to show interested users for",
+					Required:    true,
+				}
+			},
+		},
+
 		// REMINDER COMMANDS
 		{
 			Name:                     "add_any_reminder",
