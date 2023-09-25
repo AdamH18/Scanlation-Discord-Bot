@@ -67,6 +67,48 @@ func CheckReminders() {
 	}
 }
 
+func CheckBounties() {
+	//check each bounty in database and whether it has expired or not
+	//if expired disable the interest button
+	//if not expired do nothing
+
+	ticker := time.NewTicker(time.Minute * 5)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-quit:
+			return
+		case <-ticker.C:
+			log.Println("Checking for expired bounties")
+			//since GetAllBounties requires a guild, we need to get all guilds first and use a for loop to check each guild
+			guilds, err := goBot.UserGuilds(100, "", "")
+			if err != nil {
+				log.Printf("Error getting guilds: %s\n", err)
+				return
+			}
+			for _, guild := range guilds {
+				bounties, err := database.Repo.GetAllBounties(guild.ID)
+				if err != nil {
+					log.Printf("Error getting bounties: %s\n", err)
+					return
+				}
+				for _, bounty := range bounties {
+					if bounty.Expires < time.Now().Unix() {
+						//bounty has expired, disable the interest button
+						log.Printf("Bounty %s has expired\n", bounty.CustomID)
+						err := DisableInterestButton(bounty, goBot)
+						if err != nil {
+							log.Printf("Error disabling interest button for bounty %s: %s\n", bounty.CustomID, err)
+							return
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 func DoBackup() {
 	log.Println("Backing up DB")
 	name := "DB_" + time.Now().Format(time.RFC3339) + ".db"

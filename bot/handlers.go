@@ -94,11 +94,23 @@ func AddReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 func AddBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	LogCommand(i, "add_bounty")
+	//check for interest channel
+	interestChannel, err := CheckForInterestChannel(s, i.GuildID)
+	if err != nil {
+		Respond(s, i, "A interest notification channel has not been set or could not be found")
+		return
+	}
+	if !interestChannel {
+		Respond(s, i, "A interest notification channel has not been set or could not be found")
+		return
+	}
+
 	//Compiling values into Bounty struct
 	options := OptionsToMap(i.ApplicationCommandData().Options)
 	bountyID := options["custom-id"].StringValue()
 	var b database.Bounty
 	b.CustomID = bountyID
+	b.Description = options["description"].StringValue()
 	b.Guild = i.GuildID
 	b.Job = options["title"].StringValue()
 	if options["series"] == nil {
@@ -132,23 +144,49 @@ func AddBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 func BountyButtonClickHandler(s *discordgo.Session, i *discordgo.InteractionCreate, customID string) {
 	LogCommand(i, "bounty_button_click")
 	//retrieve bounty from database
-	b, err := database.Repo.GetBounty(customID, i.GuildID) //something is wrong here
-	/*Response: Error retrieving bounty from database: sql: Scan error on column index 4, name "job": converting driver.Value type string ("test") to a int64: invalid syntax */
+	b, err := database.Repo.GetBounty(customID, i.GuildID)
 	if err != nil {
-		Respond(s, i, "Error retrieving bounty from database: "+"\n😢 Did I mess up?")
+		Respond(s, i, "Something went wrong. Please try again later.")
 		return
 	}
-	log.Printf("Bounty: %v", b)
-	//save interest to database
-	go database.Repo.AddInterestedUser(b, i.Member.User.ID)
-	Respond(s, i, "You've shown interest in this bounty!")
+	//grab bounty interest channel
+	channelID, err1 := database.Repo.GetBountyInterestChannel(i.GuildID)
+	if err1 != nil {
+		Respond(s, i, "Something went wrong. Please try again later.")
+		return
+	}
+	Respond(s, i, "Successfully registered your interest in the bounty!")
+	//send notification to channel
+	s.ChannelMessageSend(channelID, i.Member.Mention()+"is interested in the bounty for "+b.Job+"!")
+}
+
+func BountyInterestChannelHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "bounty_interest_channel")
+	//set the channel the interests are set in
+	options := OptionsToMap(i.ApplicationCommandData().Options)
+	channelID := options["channel"].ChannelValue(s).ID
+	//add channel to database
+	go database.Repo.AddBountyInterestChannel(i.GuildID, channelID)
+	Respond(s, i, "Successfully set bounty interest channel to <#"+channelID+">!")
+}
+
+func CheckForInterestChannel(s *discordgo.Session, guildID string) (bool, error) {
+	//check if a bounty interest channel has been set
+	channelID, err := database.Repo.GetBountyInterestChannel(guildID)
+	if err != nil {
+		return false, err
+	}
+	if channelID == "" {
+		return false, nil
+	}
+	return true, nil
 }
 
 // returns message id of bounty embed
 func AddBountyToServer(s *discordgo.Session, i *discordgo.InteractionCreate, b database.Bounty) (string, error) {
 	options := OptionsToMap(i.ApplicationCommandData().Options)
 	//Use an embed to send bounty to server and add button to show interest
-	embed := BuildBountyEmbed(b, options["description"].StringValue())
+	embed := BuildBountyEmbed(b)
 	//create buttons
 	buttons := BuildBountyButtons(b.CustomID, false)
 
@@ -198,10 +236,10 @@ func BuildBountyButtons(bountyID string, disabled bool) []*discordgo.Button {
 	}
 }
 
-func BuildBountyEmbed(b database.Bounty, d string) *discordgo.MessageEmbed {
+func BuildBountyEmbed(b database.Bounty) *discordgo.MessageEmbed {
 	embed := &discordgo.MessageEmbed{
 		Title:       b.Job,
-		Description: d,
+		Description: b.Description,
 		Fields: []*discordgo.MessageEmbedField{
 			{
 				Name:   "Series",
@@ -232,12 +270,71 @@ func ModifyBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	//update bounty in database
 	b, err := database.Repo.UpdateBounty(bountyID, options["job"].StringValue(), options["series"].StringValue(), options["expires"].IntValue(), i.GuildID)
 	if err != nil {
-		Respond(s, i, "Error updating bounty in database: "+err.Error()+"\n😢 Did I mess up?")
+		Respond(s, i, "I was unable to update the bounty in the database as such I was unable to update the bounty in the server.")
 		return
 	}
 	log.Printf("Modified Bounty: %v", b)
 	/*Need to update bounty in server*/
+	bounty, err1 := database.Repo.GetBounty(bountyID, i.GuildID)
+	if err1 != nil {
+		Respond(s, i, "Error retrieving bounty from database. Bounty in database was still modified.")
+		return
+	}
+	err2 := ModifyBountyInServer(bounty, s)
+	if err2 != nil {
+		Respond(s, i, "Error modifying bounty message in server. Permissions I have may of changed or bounty message was deleted. Bounty in database was still modified. ")
+		return
+	}
 	Respond(s, i, "Successfully modified bounty! Good job "+i.Member.User.Username+"!")
+}
+
+func ModifyBountyInServer(b database.Bounty, s *discordgo.Session) error {
+	messageId := b.MessageID
+	channelId := b.Channel
+
+	//remake bounty embed
+	embed := BuildBountyEmbed(b)
+
+	//remake buttons
+	buttons := BuildBountyButtons(b.CustomID, false)
+
+	// edit message using messageid and channel id
+	_, err := s.ChannelMessageEditComplex(&discordgo.MessageEdit{
+		Embed: embed,
+		Components: []discordgo.MessageComponent{
+			discordgo.ActionsRow{
+				Components: []discordgo.MessageComponent{
+					buttons[0],
+				},
+			},
+		},
+		ID:      messageId,
+		Channel: channelId,
+	},
+	)
+
+	return err
+}
+
+func DisableInterestButton(bounty database.Bounty, s *discordgo.Session) error {
+	//remake buttons
+	buttons := BuildBountyButtons(bounty.CustomID, false)
+
+	// edit message using messageid and channel id
+	_, err1 := s.ChannelMessageEditComplex(&discordgo.MessageEdit{
+		Components: []discordgo.MessageComponent{
+			discordgo.ActionsRow{
+				Components: []discordgo.MessageComponent{
+					buttons[0],
+				},
+			},
+		},
+		ID:      bounty.MessageID,
+		Channel: bounty.Channel,
+	},
+	)
+
+	return err1
 }
 
 func RemoveBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -248,7 +345,7 @@ func RemoveBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	// retrieve bounty from database
 	b, err := database.Repo.GetBounty(bountyID, i.GuildID)
 	if err != nil {
-		Respond(s, i, "Error retrieving bounty from database: "+err.Error()+"\n😢 Did I mess up?")
+		Respond(s, i, "The provided bounty ID was not found or the database is unavaliable.")
 		return
 	}
 	log.Printf("Removing Bounty: %v", b)
@@ -256,13 +353,13 @@ func RemoveBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	//remove bounty from server
 	err = RemoveBountyFromServer(s, i, b)
 	if err != nil {
-		Respond(s, i, "Unable to delete bounty embed from server: "+err.Error()+"\n😢 Did I mess up?")
+		Respond(s, i, "I was unable to delete this bounty from the server. Please try it manually.")
 		return
 	}
 	//remove bounty from database (this needs to be monitored for errors)
 	res := database.Repo.RemoveBounty(bountyID, i.GuildID)
 	if res == -1 {
-		Respond(s, i, "Unable to delete bounty from database: "+err.Error()+"\n😢 Try again later.")
+		Respond(s, i, "I was unable to delete this bounty from the database but the message was deleted from the server.")
 		return
 	}
 	Respond(s, i, "Successfully removed bounty!")

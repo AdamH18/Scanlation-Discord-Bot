@@ -119,16 +119,17 @@ var (
 		},
 
 		{
-			Name: show_interested_users,
-			Description: "Show all users interested in a bounty",
+			Name:                     "set_bounty_channel",
+			Description:              "Set the channel for interests to be posted in",
+			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &adminPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "custom-id",
-					Description: "The custom ID of the bounty to show interested users for",
+					Type:        discordgo.ApplicationCommandOptionChannel,
+					Name:        "channel",
+					Description: "The channel to post interests in",
 					Required:    true,
-				}
+				},
 			},
 		},
 

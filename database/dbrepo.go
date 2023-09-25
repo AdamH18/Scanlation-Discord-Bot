@@ -39,8 +39,8 @@ func (r *SQLiteRepository) AddBounty(b Bounty) {
 	r.BountiesExec("INSERT INTO bounties(customid, guild, job, series, expires, messageid, channel) values(?, ?, ?, ?, ?, ?, ?)", b.CustomID, b.Guild, b.Job, b.Series, b.Expires, b.MessageID, b.Channel)
 }
 
-func (r *SQLiteRepository) AddInterestedUser(b Bounty, userid string) {
-	r.BountyInterestExec("INSERT INTO bounty_interest(customid, user) values(?, ?)", b.CustomID, userid)
+func (r *SQLiteRepository) AddBountyInterestChannel(guild string, channel string) {
+	r.BountyInterestExec("INSERT INTO bounty_interest(guild, channel) values(?, ?)", guild, channel)
 }
 
 // Add series entry to DB
@@ -521,6 +521,23 @@ func (r *SQLiteRepository) GetAllBounties(guild string) ([]Bounty, error) {
 		all = append(all, b)
 	}
 	return all, nil
+}
+
+func (r *SQLiteRepository) GetBountyInterestChannel(guild string) (string, error) {
+	res, err := r.db.Query("SELECT channel FROM bounty_interest WHERE guild = ?", guild)
+
+	if err != nil {
+		return "", err
+	}
+	defer res.Close()
+
+	var channel string
+	if res.Next() {
+		if err := res.Scan(&channel); err != nil {
+			return "", err
+		}
+	}
+	return channel, nil
 }
 
 // Return all reminders for which current time is after time field

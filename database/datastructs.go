@@ -20,18 +20,19 @@ func (r Reminder) String() string {
 
 //Contains all data corresponding to a bounty
 type Bounty struct {
-	CustomID  string
-	Guild     string
-	Job       string
-	Series    string
-	Expires   int64
-	MessageID string
-	Channel   string
+	CustomID    string
+	Guild       string
+	Job         string
+	Series      string
+	Expires     int64
+	MessageID   string
+	Channel     string
+	Description string
 }
 
 type BountyInterest struct {
-	CustomID string
-	User     string
+	ChannelID string
+	Guild     string
 }
 
 type Series struct {
