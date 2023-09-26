@@ -133,6 +133,22 @@ var (
 			},
 		},
 
+		{
+			//disabling this should also disable checks
+			Name:                     "disable_bounty",
+			Description:              "Disable the bounty based on its custom ID.",
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &adminPerms,
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "custom-id",
+					Description: "The custom ID of the bounty to disable",
+					Required:    true,
+				},
+			},
+		},
+
 		// REMINDER COMMANDS
 		{
 			Name:                     "add_any_reminder",
@@ -925,19 +941,19 @@ var (
 		//TODO: Investigate autocomplete - https://github.com/bwmarrin/discordgo/blob/master/examples/autocomplete/main.go
 		//TODO: Organize by subcommands
 		//TODO: Improve output to user on bad input
-
-		"remove_bounty":    RemoveBountyHandler,
-		"modify_bounty":    ModifyBountyHandler,
-		"add_bounty":       AddBountyHandler,
-		"add_any_reminder": AddAnyReminderHandler,
-		"add_reminder":     AddReminderHandler,
-		"rem_any_reminder": RemAnyReminderHandler,
-		"rem_reminder":     RemReminderHandler,
-		"my_reminders":     MyRemindersHandler,
-		"user_reminders":   UserRemindersHandler,
-		"all_reminders":    AllRemindersHandler,
-		"set_any_alarm":    SetAnyAlarmHandler,
-		"set_alarm":        SetAlarmHandler,
+		"remove_bounty":      RemoveBountyHandler,
+		"modify_bounty":      ModifyBountyHandler,
+		"add_bounty":         AddBountyHandler,
+		"set_bounty_channel": BountyInterestChannelHandler,
+		"add_any_reminder":   AddAnyReminderHandler,
+		"add_reminder":       AddReminderHandler,
+		"rem_any_reminder":   RemAnyReminderHandler,
+		"rem_reminder":       RemReminderHandler,
+		"my_reminders":       MyRemindersHandler,
+		"user_reminders":     UserRemindersHandler,
+		"all_reminders":      AllRemindersHandler,
+		"set_any_alarm":      SetAnyAlarmHandler,
+		"set_alarm":          SetAlarmHandler,
 
 		"add_series":            AddSeriesHandler,
 		"remove_series":         RemoveSeriesHandler,

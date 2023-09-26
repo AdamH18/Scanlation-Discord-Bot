@@ -25,6 +25,7 @@ var tableQuerys = []string{
 		job VARCHAR(20),
 		series VARCHAR(100) COLLATE NOCASE,
 		expires DATETIME,
+		disabled BOOLEAN,
 		PRIMARY KEY(customid, guild)
 	);
 	`,

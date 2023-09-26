@@ -384,6 +384,21 @@ func (r *SQLiteRepository) UpdateBounty(customID string, newJob string, newSerie
 	return rows > 0, nil
 }
 
+func (r *SQLiteRepository) DisableBounty(customID string, guild string) (bool, error) {
+	res, err := r.BountiesExec("UPDATE bounties SET disabled = 1 WHERE customid = ? AND guild = ?", customID, guild)
+
+	if err != nil {
+		return false, err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return rows > 0, nil
+}
+
 // Update series repo link
 func (r *SQLiteRepository) UpdateSeriesRepoLink(ch chan (int), nameSh string, newLink string, guild string) {
 	defer close(ch)

@@ -110,6 +110,7 @@ func AddBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	bountyID := options["custom-id"].StringValue()
 	var b database.Bounty
 	b.CustomID = bountyID
+	b.Disabled = false
 	b.Description = options["description"].StringValue()
 	b.Guild = i.GuildID
 	b.Job = options["title"].StringValue()
@@ -317,8 +318,8 @@ func ModifyBountyInServer(b database.Bounty, s *discordgo.Session) error {
 }
 
 func DisableInterestButton(bounty database.Bounty, s *discordgo.Session) error {
-	//remake buttons
-	buttons := BuildBountyButtons(bounty.CustomID, false)
+	// remake buttons
+	buttons := BuildBountyButtons(bounty.CustomID, true)
 
 	// edit message using messageid and channel id
 	_, err1 := s.ChannelMessageEditComplex(&discordgo.MessageEdit{
@@ -333,6 +334,12 @@ func DisableInterestButton(bounty database.Bounty, s *discordgo.Session) error {
 		Channel: bounty.Channel,
 	},
 	)
+
+	// set the disabled value to true in the database
+	_, err2 := database.Repo.DisableBounty(bounty.CustomID, bounty.Guild)
+	if err2 != nil {
+		log.Printf("Error disabling bounty within database")
+	}
 
 	return err1
 }
@@ -359,10 +366,10 @@ func RemoveBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	//remove bounty from database (this needs to be monitored for errors)
 	res := database.Repo.RemoveBounty(bountyID, i.GuildID)
 	if res == -1 {
-		Respond(s, i, "I was unable to delete this bounty from the database but the message was deleted from the server.")
+		Respond(s, i, "I was unable to delete this bounty from the database, but the message was deleted from the server.")
 		return
 	}
-	Respond(s, i, "Successfully removed bounty!")
+	Respond(s, i, "Successfully removed bounty from server and database!")
 }
 
 func RemoveBountyFromServer(s *discordgo.Session, i *discordgo.InteractionCreate, b database.Bounty) error {
@@ -385,7 +392,7 @@ func RemAnyReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate)
 	if r == 0 {
 		Respond(s, i, "Was unable to locate reminder to be removed")
 	} else if r > 0 {
-		Respond(s, i, "Successfully removed reminder")
+		Respond(s, i, "Successfully removed reminder, if it existed")
 	}
 }
 

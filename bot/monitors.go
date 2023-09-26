@@ -95,6 +95,9 @@ func CheckBounties() {
 				}
 				for _, bounty := range bounties {
 					if bounty.Expires < time.Now().Unix() {
+						if bounty.Disabled {
+							return
+						}
 						//bounty has expired, disable the interest button
 						log.Printf("Bounty %s has expired\n", bounty.CustomID)
 						err := DisableInterestButton(bounty, goBot)

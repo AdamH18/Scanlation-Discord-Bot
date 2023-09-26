@@ -28,6 +28,7 @@ type Bounty struct {
 	MessageID   string
 	Channel     string
 	Description string
+	Disabled    bool
 }
 
 type BountyInterest struct {
