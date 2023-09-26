@@ -121,7 +121,7 @@ func AddBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 	b.Expires = options["expires-at"].IntValue()
 	if options["channel"] != nil {
-		b.Channel = options["channel"].StringValue()
+		b.Channel = options["channel"].ChannelValue(s).ID
 	} else {
 		b.Channel = i.ChannelID
 	}
