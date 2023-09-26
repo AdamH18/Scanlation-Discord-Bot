@@ -21,20 +21,20 @@ var tableQuerys = []string{
 		channel VARCHAR(20),
 		customid VARCHAR(20),
 		messageid VARCHAR(20),
-		description VARCHAR(1000),
 		job VARCHAR(20),
 		series VARCHAR(100) COLLATE NOCASE,
-		expires DATETIME,
+		expires VARCHAR(100),
+		description VARCHAR(255), 
 		disabled BOOLEAN,
 		PRIMARY KEY(customid, guild)
 	);
 	`,
 
-	// Holds all data for user interested in a bounty
+	// Holds channel for guild to send bounties notifications to
 	`
 	CREATE TABLE IF NOT EXISTS bounty_interest(
-		channelid VARCHAR(20),
 		guild VARCHAR(20),
+		channelid VARCHAR(20),
 		PRIMARY KEY(guild)
 	);
 	`,

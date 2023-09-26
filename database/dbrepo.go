@@ -36,11 +36,11 @@ func (r *SQLiteRepository) AddReminder(ch chan (int), rem Reminder) {
 }
 
 func (r *SQLiteRepository) AddBounty(b Bounty) {
-	r.BountiesExec("INSERT INTO bounties(customid, guild, job, series, expires, messageid, channel) values(?, ?, ?, ?, ?, ?, ?)", b.CustomID, b.Guild, b.Job, b.Series, b.Expires, b.MessageID, b.Channel)
+	r.BountiesExec("INSERT INTO bounties(customid, guild, job, series, expires, messageid, channel, description, disabled) values(?, ?, ?, ?, ?, ?, ?, ?, ?)", b.CustomID, b.Guild, b.Job, b.Series, b.Expires, b.MessageID, b.Channel, b.Description, b.Disabled)
 }
 
 func (r *SQLiteRepository) AddBountyInterestChannel(guild string, channel string) {
-	r.BountyInterestExec("INSERT INTO bounty_interest(guild, channel) values(?, ?)", guild, channel)
+	r.BountyInterestExec("INSERT INTO bounty_interest(guild, channelid) values(?, ?)", guild, channel)
 }
 
 // Add series entry to DB
@@ -539,7 +539,7 @@ func (r *SQLiteRepository) GetAllBounties(guild string) ([]Bounty, error) {
 }
 
 func (r *SQLiteRepository) GetBountyInterestChannel(guild string) (string, error) {
-	res, err := r.db.Query("SELECT channel FROM bounty_interest WHERE guild = ?", guild)
+	res, err := r.db.Query("SELECT channelid FROM bounty_interest WHERE guild = ?", guild)
 
 	if err != nil {
 		return "", err
@@ -613,7 +613,7 @@ func (r *SQLiteRepository) GetBounty(customID string, guild string) (Bounty, err
 
 	var b Bounty
 	if res.Next() {
-		if err := res.Scan(&b.CustomID, &b.Guild, &b.Job, &b.Series, &b.Expires, &b.MessageID, &b.Channel); err != nil {
+		if err := res.Scan(&b.Guild, &b.Channel, &b.CustomID, &b.MessageID, &b.Job, &b.Series, &b.Expires, &b.Description, &b.Disabled); err != nil {
 			return Bounty{}, err
 		}
 	}

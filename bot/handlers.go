@@ -158,7 +158,7 @@ func BountyButtonClickHandler(s *discordgo.Session, i *discordgo.InteractionCrea
 	}
 	Respond(s, i, "Successfully registered your interest in the bounty!")
 	//send notification to channel
-	s.ChannelMessageSend(channelID, i.Member.Mention()+"is interested in the bounty for "+b.Job+"!")
+	s.ChannelMessageSend(channelID, i.Member.Mention()+" is interested in the bounty for "+b.Job+"!")
 }
 
 func BountyInterestChannelHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -174,12 +174,13 @@ func BountyInterestChannelHandler(s *discordgo.Session, i *discordgo.Interaction
 func CheckForInterestChannel(s *discordgo.Session, guildID string) (bool, error) {
 	//check if a bounty interest channel has been set
 	channelID, err := database.Repo.GetBountyInterestChannel(guildID)
+	log.Printf(channelID)
 	if err != nil {
 		return false, err
-	}
-	if channelID == "" {
+	} else if channelID == "" {
 		return false, nil
 	}
+
 	return true, nil
 }
 

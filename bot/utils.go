@@ -70,6 +70,11 @@ func DeferResponseNonEph(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	})
 }
 
+// Respond from defered response
+func DeferFollowUp(s *discordgo.Session, i *discordgo.InteractionCreate, response string) {
+
+}
+
 // Standardized logging of command calls
 func LogCommand(i *discordgo.InteractionCreate, name string) {
 	var g1, g2, c1, c2 string

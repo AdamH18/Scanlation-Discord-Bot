@@ -62,6 +62,7 @@ var (
 					Required:    false,
 				},
 				{
+					//change to channel option intake
 					Type:        discordgo.ApplicationCommandOptionString,
 					Name:        "channel-id",
 					Description: "Channel to send bounty in, if not given bounty will be sent in current channel",
