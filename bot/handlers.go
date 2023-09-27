@@ -158,7 +158,7 @@ func BountyButtonClickHandler(s *discordgo.Session, i *discordgo.InteractionCrea
 	}
 	Respond(s, i, "Successfully registered your interest in the bounty!")
 	//send notification to channel
-	s.ChannelMessageSend(channelID, i.Member.Mention()+" is interested in the bounty for "+b.Job+"!")
+	s.ChannelMessageSend(channelID, i.Member.Mention()+" is interested in the bounty for \""+b.Job+"\"!"+"\n"+"https://discord.com/"+i.GuildID+"/"+b.Channel+"/"+b.MessageID)
 }
 
 func BountyInterestChannelHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -268,7 +268,7 @@ func ModifyBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	LogCommand(i, "add_bounty")
 	//retrieve bounty from database
 	options := OptionsToMap(i.ApplicationCommandData().Options)
-	bountyID := options["bounty-id"].StringValue()
+	bountyID := options["custom-id"].StringValue()
 	//update bounty in database
 	b, err := database.Repo.UpdateBounty(bountyID, options["job"].StringValue(), options["series"].StringValue(), options["expires"].IntValue(), i.GuildID)
 	if err != nil {
@@ -349,11 +349,12 @@ func RemoveBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	LogCommand(i, "remove_bounty")
 	//retrieve bounty from database
 	options := OptionsToMap(i.ApplicationCommandData().Options)
-	bountyID := options["bounty-id"].StringValue()
+	bountyID := options["custom-id"].StringValue()
 	// retrieve bounty from database
 	b, err := database.Repo.GetBounty(bountyID, i.GuildID)
 	if err != nil {
 		Respond(s, i, "The provided bounty ID was not found or the database is unavaliable.")
+		log.Printf("Error retrieving bounty from database: %v", err)
 		return
 	}
 	log.Printf("Removing Bounty: %v", b)
@@ -362,6 +363,7 @@ func RemoveBountyHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	err = RemoveBountyFromServer(s, i, b)
 	if err != nil {
 		Respond(s, i, "I was unable to delete this bounty from the server. Please try it manually.")
+		log.Printf("Error removing bounty from server: %v", err)
 		return
 	}
 	//remove bounty from database (this needs to be monitored for errors)
