@@ -422,7 +422,7 @@ func (r *SQLiteRepository) ResetReminder(id int64) {
 
 // Return all reminders belonging to a specific user
 func (r *SQLiteRepository) GetUserReminders(userID string, guild string) ([]Reminder, error) {
-	res, err := SerialQuery("SELECT ROWID, * FROM reminders WHERE user = ? AND guild = ?", userID, guild)
+	res, err := r.db.Query("SELECT ROWID, * FROM reminders WHERE user = ? AND guild = ?", userID, guild)
 
 	if err != nil {
 		return nil, err
@@ -442,7 +442,7 @@ func (r *SQLiteRepository) GetUserReminders(userID string, guild string) ([]Remi
 
 // Return all reminders
 func (r *SQLiteRepository) GetAllReminders(guild string) ([]Reminder, error) {
-	res, err := SerialQuery("SELECT ROWID, * FROM reminders WHERE guild = ?", guild)
+	res, err := r.db.Query("SELECT ROWID, * FROM reminders WHERE guild = ?", guild)
 
 	if err != nil {
 		return nil, err
@@ -462,7 +462,7 @@ func (r *SQLiteRepository) GetAllReminders(guild string) ([]Reminder, error) {
 
 // Return all reminders for which current time is after time field
 func (r *SQLiteRepository) GetActiveReminders() ([]Reminder, error) {
-	res, err := SerialQuery("SELECT ROWID, * FROM reminders WHERE time < ?", time.Now().Format("2006-01-02 15:04:05"))
+	res, err := r.db.Query("SELECT ROWID, * FROM reminders WHERE time < ?", time.Now().Format("2006-01-02 15:04:05"))
 
 	if err != nil {
 		return nil, err
@@ -482,7 +482,7 @@ func (r *SQLiteRepository) GetActiveReminders() ([]Reminder, error) {
 
 // Check if the given series shorthand exists in the database
 func (r *SQLiteRepository) RegisteredSeries(ser string, guild string) bool {
-	res, err := SerialQuery("SELECT * FROM series WHERE name_sh = ? AND guild = ?", ser, guild)
+	res, err := r.db.Query("SELECT * FROM series WHERE name_sh = ? AND guild = ?", ser, guild)
 
 	if err != nil {
 		log.Println("Failed to retrieve series info: " + err.Error())
@@ -496,7 +496,7 @@ func (r *SQLiteRepository) RegisteredSeries(ser string, guild string) bool {
 
 // Check if the given user exists in the database
 func (r *SQLiteRepository) RegisteredUser(usr string, guild string) bool {
-	res, err := SerialQuery("SELECT * FROM users WHERE user = ? AND guild = ?", usr, guild)
+	res, err := r.db.Query("SELECT * FROM users WHERE user = ? AND guild = ?", usr, guild)
 
 	if err != nil {
 		log.Println("Failed to retrieve user info: " + err.Error())
@@ -510,7 +510,7 @@ func (r *SQLiteRepository) RegisteredUser(usr string, guild string) bool {
 
 // Check if the given job exists in the database
 func (r *SQLiteRepository) RegisteredJob(job string, guild string) bool {
-	res, err := SerialQuery("SELECT * FROM jobs WHERE (job_sh = ?) AND (guild = ? OR guild = 'GLOBAL')", job, guild)
+	res, err := r.db.Query("SELECT * FROM jobs WHERE (job_sh = ?) AND (guild = ? OR guild = 'GLOBAL')", job, guild)
 
 	if err != nil {
 		log.Println("Failed to retrieve job info: " + err.Error())
@@ -524,7 +524,7 @@ func (r *SQLiteRepository) RegisteredJob(job string, guild string) bool {
 
 // Get all registered users in server
 func (r *SQLiteRepository) GetAllUsers(guild string) ([]string, error) {
-	res, err := SerialQuery("SELECT user FROM users WHERE guild = ?", guild)
+	res, err := r.db.Query("SELECT user FROM users WHERE guild = ?", guild)
 
 	if err != nil {
 		return nil, err
@@ -545,7 +545,7 @@ func (r *SQLiteRepository) GetAllUsers(guild string) ([]string, error) {
 
 // Get a server's member role if registered
 func (r *SQLiteRepository) GetMemberRole(guild string) string {
-	res, err := SerialQuery("SELECT role_id FROM member_role WHERE guild = ?", guild)
+	res, err := r.db.Query("SELECT role_id FROM member_role WHERE guild = ?", guild)
 
 	if err != nil {
 		log.Println("Failed to retrieve role info: " + err.Error())
@@ -569,7 +569,7 @@ func (r *SQLiteRepository) GetMemberRole(guild string) string {
 
 // Get a server's series channel bounds if registered
 func (r *SQLiteRepository) GetSeriesChannels(guild string) (string, string, error) {
-	res, err := SerialQuery("SELECT top, bottom FROM series_channels WHERE guild = ?", guild)
+	res, err := r.db.Query("SELECT top, bottom FROM series_channels WHERE guild = ?", guild)
 
 	if err != nil {
 		return "", "", err
@@ -591,7 +591,7 @@ func (r *SQLiteRepository) GetSeriesChannels(guild string) (string, string, erro
 
 // Get the registered channel of a given series
 func (r *SQLiteRepository) GetLocalSeries(channel string) (string, error) {
-	res, err := SerialQuery("SELECT series FROM channels WHERE channel = ?", channel)
+	res, err := r.db.Query("SELECT series FROM channels WHERE channel = ?", channel)
 
 	if err != nil {
 		return "", err
@@ -613,7 +613,7 @@ func (r *SQLiteRepository) GetLocalSeries(channel string) (string, error) {
 
 // Get all assignments for a given series
 func (r *SQLiteRepository) GetSeriesAssignments(series string, guild string) (map[string][]string, error) {
-	res, err := SerialQuery("SELECT user, job FROM series_assignments WHERE series = ? AND guild = ?", series, guild)
+	res, err := r.db.Query("SELECT user, job FROM series_assignments WHERE series = ? AND guild = ?", series, guild)
 
 	if err != nil {
 		return nil, err
@@ -638,7 +638,7 @@ func (r *SQLiteRepository) GetSeriesAssignments(series string, guild string) (ma
 
 // Get all assignments for a given user
 func (r *SQLiteRepository) GetUserAssignments(user string, guild string) (map[string][]string, error) {
-	res, err := SerialQuery("SELECT series, job FROM series_assignments WHERE user = ? AND guild = ?", user, guild)
+	res, err := r.db.Query("SELECT series, job FROM series_assignments WHERE user = ? AND guild = ?", user, guild)
 
 	if err != nil {
 		return nil, err
@@ -663,7 +663,7 @@ func (r *SQLiteRepository) GetUserAssignments(user string, guild string) (map[st
 
 // Get all assignments for a given job
 func (r *SQLiteRepository) GetJobAssignments(job string, guild string) (map[string][]string, error) {
-	res, err := SerialQuery("SELECT user, series FROM series_assignments WHERE job = ? AND guild = ?", job, guild)
+	res, err := r.db.Query("SELECT user, series FROM series_assignments WHERE job = ? AND guild = ?", job, guild)
 
 	if err != nil {
 		return nil, err
@@ -688,7 +688,7 @@ func (r *SQLiteRepository) GetJobAssignments(job string, guild string) (map[stri
 
 // Get all assignments in guild. Hierarchy is series-job-user
 func (r *SQLiteRepository) GetAllAssignments(guild string) (map[string]map[string][]string, error) {
-	res, err := SerialQuery("SELECT user, series, job FROM series_assignments WHERE guild = ?", guild)
+	res, err := r.db.Query("SELECT user, series, job FROM series_assignments WHERE guild = ?", guild)
 
 	if err != nil {
 		return nil, err
@@ -718,7 +718,7 @@ func (r *SQLiteRepository) GetAllAssignments(guild string) (map[string]map[strin
 
 // Get all assignments for a given series and job
 func (r *SQLiteRepository) GetSeriesJobAssignments(series string, job string, guild string) ([]string, error) {
-	res, err := SerialQuery("SELECT user FROM series_assignments WHERE series = ? AND job = ? AND guild = ?", series, job, guild)
+	res, err := r.db.Query("SELECT user FROM series_assignments WHERE series = ? AND job = ? AND guild = ?", series, job, guild)
 
 	if err != nil {
 		return nil, err
@@ -739,7 +739,7 @@ func (r *SQLiteRepository) GetSeriesJobAssignments(series string, job string, gu
 
 // Get the full name of a series from its shorthand
 func (r *SQLiteRepository) GetSeriesFullName(seriesSh string, guild string) (string, error) {
-	res, err := SerialQuery("SELECT name_full FROM series WHERE name_sh = ? AND guild = ?", seriesSh, guild)
+	res, err := r.db.Query("SELECT name_full FROM series WHERE name_sh = ? AND guild = ?", seriesSh, guild)
 
 	if err != nil {
 		return "", err
@@ -761,7 +761,7 @@ func (r *SQLiteRepository) GetSeriesFullName(seriesSh string, guild string) (str
 
 // Get full name and short name of all series in server
 func (r *SQLiteRepository) GetAllSeries(guild string) ([]Series, error) {
-	res, err := SerialQuery("SELECT name_sh, name_full FROM series WHERE guild = ?", guild)
+	res, err := r.db.Query("SELECT name_sh, name_full FROM series WHERE guild = ?", guild)
 
 	if err != nil {
 		return nil, err
@@ -787,7 +787,7 @@ func (r *SQLiteRepository) GetAllSeries(guild string) ([]Series, error) {
 
 // Get all channels registered to a series
 func (r *SQLiteRepository) GetAllSeriesChannels(series string, guild string) ([]string, error) {
-	res, err := SerialQuery("SELECT channel FROM channels WHERE series = ? AND guild = ?", series, guild)
+	res, err := r.db.Query("SELECT channel FROM channels WHERE series = ? AND guild = ?", series, guild)
 
 	if err != nil {
 		return nil, err
@@ -809,7 +809,7 @@ func (r *SQLiteRepository) GetAllSeriesChannels(series string, guild string) ([]
 
 // Get get full name, short name, and locality of all jobs in server
 func (r *SQLiteRepository) GetAllJobs(guild string) ([]Job, error) {
-	res, err := SerialQuery("SELECT * FROM jobs WHERE guild = ? OR guild = 'GLOBAL'", guild)
+	res, err := r.db.Query("SELECT * FROM jobs WHERE guild = ? OR guild = 'GLOBAL'", guild)
 
 	if err != nil {
 		return nil, err
@@ -836,7 +836,7 @@ func (r *SQLiteRepository) GetAllJobs(guild string) ([]Job, error) {
 
 // Get the full name of a job from its shorthand
 func (r *SQLiteRepository) GetJobFullName(jobSh string, guild string) (string, error) {
-	res, err := SerialQuery("SELECT job_full, guild FROM jobs WHERE (job_sh = ?) AND (guild = ? OR guild = 'GLOBAL')", jobSh, guild)
+	res, err := r.db.Query("SELECT job_full, guild FROM jobs WHERE (job_sh = ?) AND (guild = ? OR guild = 'GLOBAL')", jobSh, guild)
 
 	if err != nil {
 		return "", err
@@ -866,7 +866,7 @@ func (r *SQLiteRepository) GetJobFullName(jobSh string, guild string) (string, e
 
 // Get preferred color of a user
 func (r *SQLiteRepository) GetUserColor(user string, guild string) (string, error) {
-	res, err := SerialQuery("SELECT color FROM users WHERE user = ? AND guild = ?", user, guild)
+	res, err := r.db.Query("SELECT color FROM users WHERE user = ? AND guild = ?", user, guild)
 
 	if err != nil {
 		return "", err
@@ -888,7 +888,7 @@ func (r *SQLiteRepository) GetUserColor(user string, guild string) (string, erro
 
 // Get preferred color of all users in server
 func (r *SQLiteRepository) GetAllColors(guild string) (map[string]string, error) {
-	res, err := SerialQuery("SELECT user, color FROM users WHERE guild = ?", guild)
+	res, err := r.db.Query("SELECT user, color FROM users WHERE guild = ?", guild)
 
 	if err != nil {
 		return nil, err
@@ -909,7 +909,7 @@ func (r *SQLiteRepository) GetAllColors(guild string) (map[string]string, error)
 
 // Get vanity role of a user
 func (r *SQLiteRepository) GetUserVanityRole(user string, guild string) (string, error) {
-	res, err := SerialQuery("SELECT vanity_role FROM users WHERE user = ? AND guild = ?", user, guild)
+	res, err := r.db.Query("SELECT vanity_role FROM users WHERE user = ? AND guild = ?", user, guild)
 
 	if err != nil {
 		return "", err
@@ -931,7 +931,7 @@ func (r *SQLiteRepository) GetUserVanityRole(user string, guild string) (string,
 
 // Get number of users with a given vanity role
 func (r *SQLiteRepository) NumUsersWithVanity(role string, guild string) (int, error) {
-	res, err := SerialQuery("SELECT user FROM users WHERE vanity_role = ? AND guild = ?", role, guild)
+	res, err := r.db.Query("SELECT user FROM users WHERE vanity_role = ? AND guild = ?", role, guild)
 
 	if err != nil {
 		return 0, err
@@ -948,7 +948,7 @@ func (r *SQLiteRepository) NumUsersWithVanity(role string, guild string) (int, e
 
 // Get roles billboard message ID in guild
 func (r *SQLiteRepository) GetRolesBillboard(guild string) (string, string, error) {
-	res, err := SerialQuery("SELECT message, channel FROM roles_billboards WHERE guild = ?", guild)
+	res, err := r.db.Query("SELECT message, channel FROM roles_billboards WHERE guild = ?", guild)
 
 	if err != nil {
 		return "", "", err
@@ -970,7 +970,7 @@ func (r *SQLiteRepository) GetRolesBillboard(guild string) (string, string, erro
 
 // Get colors billboard message ID in guild
 func (r *SQLiteRepository) GetColorsBillboard(guild string) (string, string, error) {
-	res, err := SerialQuery("SELECT message, channel FROM colors_billboards WHERE guild = ?", guild)
+	res, err := r.db.Query("SELECT message, channel FROM colors_billboards WHERE guild = ?", guild)
 
 	if err != nil {
 		return "", "", err
@@ -992,7 +992,7 @@ func (r *SQLiteRepository) GetColorsBillboard(guild string) (string, string, err
 
 // Return all notification channels
 func (r *SQLiteRepository) GetAllNotificationChannels() ([]NotificationChannel, error) {
-	res, err := SerialQuery("SELECT * FROM notification_channels")
+	res, err := r.db.Query("SELECT * FROM notification_channels")
 
 	if err != nil {
 		return nil, err
