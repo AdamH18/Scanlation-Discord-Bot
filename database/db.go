@@ -53,7 +53,7 @@ func NewSQLiteRepository(db *sql.DB) *SQLiteRepository {
 }
 
 // Handle all database executions in series rather than parallel
-func DBWriter() {
+func DBController() {
 	for {
 		select {
 		case <-Quit:
@@ -63,16 +63,6 @@ func DBWriter() {
 			out.res, out.err = Repo.db.Exec(exe.quer, exe.vals...)
 			exe.ch <- out
 			close(exe.ch)
-		}
-	}
-}
-
-// Handle all database reads in series rather than parallel
-func DBReader() {
-	for {
-		select {
-		case <-Quit:
-			return
 		case exe := <-DBReaderCh:
 			out := QueryOut{}
 			out.res, out.err = Repo.db.Query(exe.quer, exe.vals...)
@@ -110,9 +100,8 @@ func StartDatabase(loc string) {
 	}
 
 	DBWriterCh = make(chan ExecIn)
-	go DBWriter()
 	DBReaderCh = make(chan QueryIn)
-	go DBReader()
+	go DBController()
 }
 
 func RegisterChannels(serc chan func() (string, string), assc chan string, colc chan string, actc chan bool, errc chan func() (string, []any, string), quit chan struct{}) {
