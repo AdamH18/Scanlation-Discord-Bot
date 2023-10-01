@@ -16,6 +16,7 @@ var (
 	ErrorsCh      chan func() (string, []any, string)
 
 	DBWriterCh chan ExecIn
+	DBReaderCh chan QueryIn
 	Quit       chan struct{}
 )
 
@@ -31,6 +32,17 @@ type ExecIn struct {
 
 type ExecOut struct {
 	res sql.Result
+	err error
+}
+
+type QueryIn struct {
+	quer string
+	vals []any
+	ch   chan QueryOut
+}
+
+type QueryOut struct {
+	res *sql.Rows
 	err error
 }
 
@@ -55,6 +67,33 @@ func DBWriter() {
 	}
 }
 
+// Handle all database reads in series rather than parallel
+func DBReader() {
+	for {
+		select {
+		case <-Quit:
+			return
+		case exe := <-DBReaderCh:
+			out := QueryOut{}
+			out.res, out.err = Repo.db.Query(exe.quer, exe.vals...)
+			exe.ch <- out
+			close(exe.ch)
+		}
+	}
+}
+
+// Wrapper function that can be called with the same format as Query()
+func SerialQuery(query string, args ...any) (*sql.Rows, error) {
+	results := make(chan QueryOut)
+	DBReaderCh <- QueryIn{
+		quer: query,
+		vals: args,
+		ch:   results,
+	}
+	out := <-results
+	return out.res, out.err
+}
+
 // DB initialization
 func StartDatabase(loc string) {
 	log.Println("Starting database...")
@@ -72,6 +111,8 @@ func StartDatabase(loc string) {
 
 	DBWriterCh = make(chan ExecIn)
 	go DBWriter()
+	DBReaderCh = make(chan QueryIn)
+	go DBReader()
 }
 
 func RegisterChannels(serc chan func() (string, string), assc chan string, colc chan string, actc chan bool, errc chan func() (string, []any, string), quit chan struct{}) {

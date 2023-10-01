@@ -68,7 +68,7 @@ func (r *SQLiteRepository) SeriesExec(guild string, query string, args ...any) s
 		return res
 	}
 	//Get name of single updated series
-	quer, err := r.db.Query("SELECT name_sh FROM series WHERE ROWID = ?", id)
+	quer, err := SerialQuery("SELECT name_sh FROM series WHERE ROWID = ?", id)
 	if err != nil {
 		log.Println("Error getting data for last insert: " + err.Error())
 		return res
@@ -138,7 +138,7 @@ func (r *SQLiteRepository) SeriesAssignmentsExec(guild string, query string, arg
 		return res
 	}
 	//Get name of single updated series. If anything goes wrong, just update everything
-	quer, err := r.db.Query("SELECT series FROM series_assignments WHERE ROWID = ?", id)
+	quer, err := SerialQuery("SELECT series FROM series_assignments WHERE ROWID = ?", id)
 	if err != nil {
 		log.Println("Error getting data for last insert: " + err.Error())
 		SeriesCh <- func() (string, string) { return guild, "" }
