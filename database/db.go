@@ -59,7 +59,7 @@ func DBWriter() {
 func StartDatabase(loc string) {
 	log.Println("Starting database...")
 	// Database locking error fix from API spec
-	db, err := sql.Open("sqlite3", "file:"+loc+"?_mutex=full&_busy_timeout=9999999")
+	db, err := sql.Open("sqlite3", "file:"+loc+"?_busy_timeout=9999999")
 	if err != nil {
 		log.Fatal(err)
 	}
