@@ -6,7 +6,6 @@ import (
 	"scanlation-discord-bot/database"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -75,23 +74,6 @@ func LogCommand(i *discordgo.InteractionCreate, name string) {
 		c2 = i.ChannelID
 	}
 	log.Printf("User %s (%s) in guild %s (%s) and channel %s (%s) used %s command with options:\n", i.Member.User.Username, i.Member.User.ID, g1, g2, c1, c2, name)
-}
-
-// Attempt write action to database, and reply properly if performed in time
-// Return values: -2 = database timeout, -1 = database error, >=0 = expected output from DB function
-func AttemptDatabase(s *discordgo.Session, i *discordgo.InteractionCreate, ch chan (int)) int {
-	timer := time.NewTimer(time.Millisecond * 2500)
-	select {
-	case <-timer.C:
-		Respond(s, i, "The database did not respond in time, but your action is queued. Use /check_db to see the status of queued actions")
-		return -2
-	case r := <-ch:
-		if r >= 0 {
-			return r
-		}
-		Respond(s, i, "Sorry, something went wrong")
-		return r
-	}
 }
 
 // Checks if command registered with Discord is in bot
@@ -259,20 +241,16 @@ func CreateChannels(ser database.Series) error {
 	goBot.GuildChannelsReorder(ser.Guild, categories)
 
 	//Register channels as belonging to series
-	ch1 := make(chan (int), 1)
-	ch2 := make(chan (int), 1)
-	ch3 := make(chan (int), 1)
-	go database.Repo.AddChannel(ch1, database.Channel{Channel: inf.ID, Series: ser.NameSh, Guild: ser.Guild})
-	go database.Repo.AddChannel(ch2, database.Channel{Channel: gen.ID, Series: ser.NameSh, Guild: ser.Guild})
-	go database.Repo.AddChannel(ch3, database.Channel{Channel: pr.ID, Series: ser.NameSh, Guild: ser.Guild})
+	go database.Repo.AddChannel(database.Channel{Channel: inf.ID, Series: ser.NameSh, Guild: ser.Guild})
+	go database.Repo.AddChannel(database.Channel{Channel: gen.ID, Series: ser.NameSh, Guild: ser.Guild})
+	go database.Repo.AddChannel(database.Channel{Channel: pr.ID, Series: ser.NameSh, Guild: ser.Guild})
 
 	//Update database with new top or bottom of channel bounds if necessary
-	ch := make(chan (int), 1)
 	if newStart {
-		go database.Repo.UpdateSeriesChannelsTop(ch, newCat.ID, ser.Guild)
+		go database.Repo.UpdateSeriesChannelsTop(newCat.ID, ser.Guild)
 	}
 	if newEnd {
-		go database.Repo.UpdateSeriesChannelsBottom(ch, newCat.ID, ser.Guild)
+		go database.Repo.UpdateSeriesChannelsBottom(newCat.ID, ser.Guild)
 	}
 
 	return nil

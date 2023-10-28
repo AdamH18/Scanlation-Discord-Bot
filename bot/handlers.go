@@ -45,12 +45,14 @@ func AddAnyReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate)
 	rem.Time = (time.Now().Add(time.Hour * time.Duration(rem.Days*24)).Add(time.Hour * time.Duration(mod))).Format("2006-01-02 15:04:05")
 
 	//Add reminder to DB
-	ch := make(chan (int), 1)
-	go database.Repo.AddReminder(ch, rem)
-	r := AttemptDatabase(s, i, ch)
-	if r > -1 {
-		Respond(s, i, "Successfully added reminder")
+	err := database.Repo.AddReminder(rem)
+	response := ""
+	if err != nil {
+		response = "Error adding reminder to database: " + err.Error()
+	} else {
+		response = "Successfully added reminder to database"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for add_reminder
@@ -80,12 +82,14 @@ func AddReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	rem.Time = (time.Now().Add(time.Hour * time.Duration(rem.Days*24)).Add(time.Hour * time.Duration(mod))).Format("2006-01-02 15:04:05")
 
 	//Add reminder to DB
-	ch := make(chan (int), 1)
-	go database.Repo.AddReminder(ch, rem)
-	r := AttemptDatabase(s, i, ch)
-	if r > -1 {
-		Respond(s, i, "Successfully added reminder")
+	err := database.Repo.AddReminder(rem)
+	response := ""
+	if err != nil {
+		response = "Error adding reminder to database: " + err.Error()
+	} else {
+		response = "Successfully added reminder to database"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for rem_any_reminder
@@ -96,14 +100,16 @@ func RemAnyReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate)
 	remID := options["id"].IntValue()
 	log.Printf("ID: %d", remID)
 	//Send to DB for removal
-	ch := make(chan (int), 1)
-	go database.Repo.RemoveReminder(ch, remID, i.GuildID)
-	r := AttemptDatabase(s, i, ch)
-	if r == 0 {
-		Respond(s, i, "Was unable to locate reminder to be removed")
-	} else if r > 0 {
-		Respond(s, i, "Successfully removed reminder")
+	rows, err := database.Repo.RemoveReminder(remID, i.GuildID)
+	response := ""
+	if err != nil {
+		response = "Error removing reminder from database: " + err.Error()
+	} else if rows == 0 {
+		response = "Was unable to locate reminder to be removed"
+	} else {
+		response = "Successfully removed reminder from database"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for rem_reminder
@@ -114,14 +120,16 @@ func RemReminderHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	remID := options["id"].IntValue()
 	log.Printf("ID: %d", remID)
 	//Send to DB for removal
-	ch := make(chan (int), 1)
-	go database.Repo.RemoveUserReminder(ch, remID, i.Member.User.ID, i.GuildID)
-	r := AttemptDatabase(s, i, ch)
-	if r == 0 {
-		Respond(s, i, "Was unable to locate reminder to be removed")
-	} else if r > 0 {
-		Respond(s, i, "Successfully removed reminder")
+	rows, err := database.Repo.RemoveUserReminder(remID, i.Member.User.ID, i.GuildID)
+	response := ""
+	if err != nil {
+		response = "Error removing reminder from database: " + err.Error()
+	} else if rows == 0 {
+		response = "Was unable to locate reminder to be removed"
+	} else {
+		response = "Successfully removed reminder from database"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for my_reminders
@@ -203,12 +211,14 @@ func SetAnyAlarmHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	log.Printf("User: %s Date-Time: %s Message: %s Days: %d", rem.User, rem.Time, rem.Message, rem.Days)
 
 	//Adding reminder to DB
-	ch := make(chan (int), 1)
-	go database.Repo.AddReminder(ch, rem)
-	r := AttemptDatabase(s, i, ch)
-	if r > -1 {
-		Respond(s, i, "Successfully added alarm")
+	err = database.Repo.AddReminder(rem)
+	response := ""
+	if err != nil {
+		response = "Error adding reminder to database: " + err.Error()
+	} else {
+		response = "Successfully added reminder to database"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for set_alarm
@@ -237,12 +247,14 @@ func SetAlarmHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	log.Printf("Date-Time: %s Message: %s Days: %d", rem.Time, rem.Message, rem.Days)
 
 	//Adding reminder to DB
-	ch := make(chan (int), 1)
-	go database.Repo.AddReminder(ch, rem)
-	r := AttemptDatabase(s, i, ch)
-	if r > -1 {
-		Respond(s, i, "Successfully added alarm")
+	err = database.Repo.AddReminder(rem)
+	response := ""
+	if err != nil {
+		response = "Error adding reminder to database: " + err.Error()
+	} else {
+		response = "Successfully added reminder to database"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for add_series
@@ -266,14 +278,12 @@ func AddSeriesHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	log.Printf("Full-Name: %s Short-Name: %s Full-Create: %t Ping-Role: %s Repo-Link: %s", ser.NameFull, ser.NameSh, fullCreate, ser.PingRole, ser.RepoLink)
 
 	//Adding series to DB
-	ch := make(chan (int), 1)
-	go database.Repo.AddSeries(ch, ser)
-	r := AttemptDatabase(s, i, ch)
+	err := database.Repo.AddSeries(ser)
 	response := ""
-	if r >= 0 {
+	if err != nil {
+		response = "Error adding series to database: " + err.Error()
+	} else {
 		response = "Successfully created series " + ser.NameFull
-	} else if r == -1 {
-		return
 	}
 
 	// Creating channels and roles for full create plus keeping track of results
@@ -314,14 +324,16 @@ func RemoveSeriesHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	log.Printf("Full-Name: %s Short-Name: %s", nameFull, nameSh)
 
 	//Removing series from DB
-	ch := make(chan (int), 1)
-	go database.Repo.RemoveSeries(ch, nameSh, nameFull, i.GuildID)
-	r := AttemptDatabase(s, i, ch)
-	if r == 0 {
-		Respond(s, i, "Was unable to locate series to be removed")
-	} else if r > 0 {
-		Respond(s, i, "Successfully removed series")
+	done, err := database.Repo.RemoveSeries(nameSh, nameFull, i.GuildID)
+	response := ""
+	if err != nil {
+		response = "Error removing series from database: " + err.Error()
+	} else if !done {
+		response = "Could not locate series for removal"
+	} else {
+		response = "Successfully removed series and all references from databases"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for server_series
@@ -345,14 +357,16 @@ func ChangeSeriesTitleHandler(s *discordgo.Session, i *discordgo.InteractionCrea
 	log.Printf("Short-Name: %s New-Full-Name: %s", nameSh, nameFull)
 
 	//Updating title
-	ch := make(chan (int), 1)
-	go database.Repo.UpdateSeriesName(ch, nameSh, nameFull, i.GuildID)
-	r := AttemptDatabase(s, i, ch)
-	if r == 0 {
-		Respond(s, i, "Was unable to locate series for name change")
-	} else if r > 0 {
-		Respond(s, i, "Successfully changed series name")
+	done, err := database.Repo.UpdateSeriesName(nameSh, nameFull, i.GuildID)
+	response := ""
+	if err != nil {
+		response = "Error changing series name: " + err.Error()
+	} else if !done {
+		response = "Could not locate series for name change"
+	} else {
+		response = "Successfully changed series name"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for change_series_repo
@@ -364,14 +378,16 @@ func ChangeSeriesRepoHandler(s *discordgo.Session, i *discordgo.InteractionCreat
 	log.Printf("Short-Name: %s New-Repo-Link: %s", nameSh, repoLink)
 
 	//Updating link
-	ch := make(chan (int), 1)
-	go database.Repo.UpdateSeriesRepoLink(ch, nameSh, repoLink, i.GuildID)
-	r := AttemptDatabase(s, i, ch)
-	if r == 0 {
-		Respond(s, i, "Was unable to locate series for repo change")
-	} else if r > 0 {
-		Respond(s, i, "Successfully changed series repo")
+	done, err := database.Repo.UpdateSeriesRepoLink(nameSh, repoLink, i.GuildID)
+	response := ""
+	if err != nil {
+		response = "Error changing series link: " + err.Error()
+	} else if !done {
+		response = "Could not locate series for link change"
+	} else {
+		response = "Successfully changed series link"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for add_series_channel
@@ -392,12 +408,14 @@ func AddSeriesChannelHandler(s *discordgo.Session, i *discordgo.InteractionCreat
 	}
 
 	//Add channel to DB
-	ch := make(chan (int), 1)
-	go database.Repo.AddChannel(ch, cha)
-	r := AttemptDatabase(s, i, ch)
-	if r > -1 {
-		Respond(s, i, "Successfully added channel")
+	err := database.Repo.AddChannel(cha)
+	response := ""
+	if err != nil {
+		response = "Error adding channel to database: " + err.Error()
+	} else {
+		response = "Successfully added channel to database"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for remove_series_channel
@@ -405,14 +423,16 @@ func RemoveSeriesChannelHandler(s *discordgo.Session, i *discordgo.InteractionCr
 	LogCommand(i, "remove_series_channel")
 
 	//Removing channel from DB
-	ch := make(chan (int), 1)
-	go database.Repo.RemoveChannel(ch, i.ChannelID)
-	r := AttemptDatabase(s, i, ch)
-	if r == 0 {
-		Respond(s, i, "Was unable to locate channel to be removed")
-	} else if r > 0 {
-		Respond(s, i, "Successfully removed channel")
+	done, err := database.Repo.RemoveChannel(i.ChannelID)
+	response := ""
+	if err != nil {
+		response = "Error removing channel from database: " + err.Error()
+	} else if !done {
+		response = "This channel was not registered in the first place"
+	} else {
+		response = "Successfully removed channel from database"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for add_user
@@ -428,23 +448,25 @@ func AddUserHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	log.Printf("User: %s", usr.User)
 
 	//Add user to DB
-	ch := make(chan (int), 1)
-	go database.Repo.AddUser(ch, usr)
-	r := AttemptDatabase(s, i, ch)
-	if r > -1 {
-		response := "Successfully added user"
+	err := database.Repo.AddUser(usr)
+	response := ""
+	if err != nil {
+		response = "Error adding user to database: " + err.Error()
+	} else {
+		response = "Successfully added user to database"
+
 		//If member role is set, give role to new user
 		mem := database.Repo.GetMemberRole(i.GuildID)
 		if mem != "" {
-			err := s.GuildMemberRoleAdd(i.GuildID, usr.User, mem)
+			err = s.GuildMemberRoleAdd(i.GuildID, usr.User, mem)
 			if err != nil {
 				response += "\nError giving member role: " + err.Error()
 			} else {
 				response += "\nMember role successfully given"
 			}
 		}
-		Respond(s, i, response)
 	}
+	Respond(s, i, response)
 }
 
 // Handler for remove_user
@@ -455,25 +477,27 @@ func RemoveUserHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	log.Printf("User: %s", user)
 
 	//Removing user from DB
-	ch := make(chan (int), 1)
-	go database.Repo.RemoveUser(ch, user, i.GuildID)
-	r := AttemptDatabase(s, i, ch)
-	if r == 0 {
-		Respond(s, i, "Was unable to locate user to be removed")
-	} else if r > 0 {
-		response := "Successfully removed user"
+	done, err := database.Repo.RemoveUser(user, i.GuildID)
+	response := ""
+	if err != nil {
+		response = "Error removing user from database: " + err.Error()
+	} else if !done {
+		response = "This user was not registered in the first place"
+	} else {
+		response = "Successfully removed user from database"
+
 		//If member role is set, remove role from user
 		mem := database.Repo.GetMemberRole(i.GuildID)
 		if mem != "" {
-			err := s.GuildMemberRoleRemove(i.GuildID, user, mem)
+			err = s.GuildMemberRoleRemove(i.GuildID, user, mem)
 			if err != nil {
 				response += "\nError removing member role: " + err.Error()
 			} else {
 				response += "\nMember role successfully removed"
 			}
 		}
-		Respond(s, i, response)
 	}
+	Respond(s, i, response)
 }
 
 // Handler for server_users
@@ -500,12 +524,14 @@ func AddJobHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	log.Printf("Name-Full: %s Name-Short: %s", job.JobFull, job.JobSh)
 
 	//Add job to DB
-	ch := make(chan (int), 1)
-	go database.Repo.AddJob(ch, job)
-	r := AttemptDatabase(s, i, ch)
-	if r > -1 {
-		Respond(s, i, "Successfully added job")
+	err := database.Repo.AddJob(job)
+	response := ""
+	if err != nil {
+		response = "Error adding job to database: " + err.Error()
+	} else {
+		response = "Successfully added job to database"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for add_global_job
@@ -524,12 +550,14 @@ func AddGlobalJobHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	log.Printf("Name-Full: %s Name-Short: %s", job.JobFull, job.JobSh)
 
 	//Add job to DB
-	ch := make(chan (int), 1)
-	go database.Repo.AddJob(ch, job)
-	r := AttemptDatabase(s, i, ch)
-	if r > -1 {
-		Respond(s, i, "Successfully added global job")
+	err := database.Repo.AddJob(job)
+	response := ""
+	if err != nil {
+		response = "Error adding job to database: " + err.Error()
+	} else {
+		response = "Successfully added job to database"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for remove_job
@@ -540,14 +568,16 @@ func RemoveJobHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	log.Printf("Name-Short: %s", nameSh)
 
 	//Removing job from DB
-	ch := make(chan (int), 1)
-	go database.Repo.RemoveJob(ch, nameSh, i.GuildID)
-	r := AttemptDatabase(s, i, ch)
-	if r == 0 {
-		Respond(s, i, "Was unable to locate job to be removed")
-	} else if r > 0 {
-		Respond(s, i, "Successfully removed job")
+	done, err := database.Repo.RemoveJob(nameSh, i.GuildID)
+	response := ""
+	if err != nil {
+		response = "Error removing job from database: " + err.Error()
+	} else if !done {
+		response = "Could not locate job for removal"
+	} else {
+		response = "Successfully removed job and all references from databases"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for server_jobs
@@ -573,12 +603,14 @@ func AddMemberRoleHandler(s *discordgo.Session, i *discordgo.InteractionCreate) 
 	log.Printf("Role: %s", mem.Role)
 
 	//Add role to DB
-	ch := make(chan (int), 1)
-	go database.Repo.AddMemberRole(ch, mem)
-	r := AttemptDatabase(s, i, ch)
-	if r > -1 {
-		Respond(s, i, "Successfully added member role")
+	err := database.Repo.AddMemberRole(mem)
+	response := ""
+	if err != nil {
+		response = "Error adding member role to database: " + err.Error()
+	} else {
+		response = "Successfully added member role to database"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for remove_member_role
@@ -586,14 +618,16 @@ func RemoveMemberRoleHandler(s *discordgo.Session, i *discordgo.InteractionCreat
 	LogCommand(i, "remove_member_role")
 
 	//Removing member role from DB
-	ch := make(chan (int), 1)
-	go database.Repo.RemoveMemberRole(ch, i.GuildID)
-	r := AttemptDatabase(s, i, ch)
-	if r == 0 {
-		Respond(s, i, "Was unable to locate role to be removed")
-	} else if r > 0 {
-		Respond(s, i, "Successfully removed role")
+	done, err := database.Repo.RemoveMemberRole(i.GuildID)
+	response := ""
+	if err != nil {
+		response = "Error removing member role from database: " + err.Error()
+	} else if !done {
+		response = "No role was registered in the first place"
+	} else {
+		response = "Successfully removed member role from database"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for reg_series_channels
@@ -608,12 +642,14 @@ func RegSeriesChannelsHandler(s *discordgo.Session, i *discordgo.InteractionCrea
 	log.Printf("Top: %s Bottom: %s", sec.Top, sec.Bottom)
 
 	//Add role to DB
-	ch := make(chan (int), 1)
-	go database.Repo.AddSeriesChannels(ch, sec)
-	r := AttemptDatabase(s, i, ch)
-	if r > -1 {
-		Respond(s, i, "Successfully registered series channels")
+	err := database.Repo.AddSeriesChannels(sec)
+	response := ""
+	if err != nil {
+		response = "Error adding series channels to database: " + err.Error()
+	} else {
+		response = "Successfully added series channels to database"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for add_series_assignment
@@ -654,12 +690,14 @@ func AddSeriesAssignmentHandler(s *discordgo.Session, i *discordgo.InteractionCr
 	}
 
 	//Add assignment to DB
-	ch := make(chan (int), 1)
-	go database.Repo.AddAssignment(ch, sea)
-	r := AttemptDatabase(s, i, ch)
-	if r > -1 {
-		Respond(s, i, "Successfully added assignment")
+	err = database.Repo.AddAssignment(sea)
+	response := ""
+	if err != nil {
+		response = "Error adding assignment to database: " + err.Error()
+	} else {
+		response = "Successfully added assignment to database"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for remove_series_assignment
@@ -683,14 +721,16 @@ func RemoveSeriesAssignmentHandler(s *discordgo.Session, i *discordgo.Interactio
 	}
 
 	//Removing assignemnt from DB
-	ch := make(chan (int), 1)
-	go database.Repo.RemoveSeriesAssignment(ch, user, series, job, i.GuildID)
-	r := AttemptDatabase(s, i, ch)
-	if r == 0 {
-		Respond(s, i, "Was unable to locate assignment to be removed")
-	} else if r > 0 {
-		Respond(s, i, "Successfully removed assignment")
+	done, err := database.Repo.RemoveSeriesAssignment(user, series, job, i.GuildID)
+	response := ""
+	if err != nil {
+		response = "Error removing assignment from database: " + err.Error()
+	} else if !done {
+		response = "Could not locate assignment for removal"
+	} else {
+		response = "Successfully removed assignment from database"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for remove_all_assignments
@@ -701,14 +741,16 @@ func RemoveAllAssignmentsHandler(s *discordgo.Session, i *discordgo.InteractionC
 	log.Printf("User: %s", user)
 
 	//Removing assignemnt from DB
-	ch := make(chan (int), 1)
-	go database.Repo.RemoveAllAssignments(ch, user, i.GuildID)
-	r := AttemptDatabase(s, i, ch)
-	if r == 0 {
-		Respond(s, i, "Was unable to locate assignments to be removed")
-	} else if r > 0 {
-		Respond(s, i, "Successfully removed all assignments")
+	done, err := database.Repo.RemoveAllAssignments(user, i.GuildID)
+	response := ""
+	if err != nil {
+		response = "Error removing assignments from database: " + err.Error()
+	} else if !done {
+		response = "User had no assignments to remove"
+	} else {
+		response = "Successfully removed assignments from database"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for series_assignments
@@ -907,14 +949,14 @@ func SetColorHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	log.Printf("Color: %s", color)
 
 	//Update color in DB
-	ch := make(chan (int), 1)
-	go database.Repo.UpdateColor(ch, user, color, i.GuildID)
-	r := AttemptDatabase(s, i, ch)
-	if r == 0 {
-		Respond(s, i, "Was unable to locate user for color change")
-	} else if r > 0 {
-		Respond(s, i, "Successfully changed user color")
+	err := database.Repo.UpdateColor(user, color, i.GuildID)
+	response := ""
+	if err != nil {
+		response = "Error updating color: " + err.Error()
+	} else {
+		response = "Successfully updated your credits color"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for set_user_color
@@ -926,14 +968,14 @@ func SetUserColorHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	log.Printf("User: %s Color: %s", user, color)
 
 	//Update color in DB
-	ch := make(chan (int), 1)
-	go database.Repo.UpdateColor(ch, user, color, i.GuildID)
-	r := AttemptDatabase(s, i, ch)
-	if r == 0 {
-		Respond(s, i, "Was unable to locate user for color change")
-	} else if r > 0 {
-		Respond(s, i, "Successfully changed user color")
+	err := database.Repo.UpdateColor(user, color, i.GuildID)
+	response := ""
+	if err != nil {
+		response = "Error updating color: " + err.Error()
+	} else {
+		response = "Successfully updated user's credits color"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for vanity_role
@@ -963,8 +1005,10 @@ func VanityRoleHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				response = "Error adding vanity role:" + err.Error()
 			} else {
 				response = "Successfully added vanity role"
-				ch := make(chan (int), 1)
-				go database.Repo.UpdateVanityRole(ch, i.Member.User.ID, roleId, i.GuildID)
+				err = database.Repo.UpdateVanityRole(i.Member.User.ID, roleId, i.GuildID)
+				if err != nil {
+					log.Println("Error recording role assignment in database: " + err.Error())
+				}
 			}
 		}
 		Respond(s, i, response)
@@ -1054,12 +1098,12 @@ func VanityRoleHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 	//Register new role in database
-	ch := make(chan (int), 1)
-	go database.Repo.UpdateVanityRole(ch, i.Member.User.ID, role.ID, i.GuildID)
-	r := AttemptDatabase(s, i, ch)
-	if r >= 0 {
-		Respond(s, i, "Successfully created and gave new vanity role")
+	err = database.Repo.UpdateVanityRole(i.Member.User.ID, role.ID, i.GuildID)
+	if err != nil {
+		Respond(s, i, "Error adding new role to database: "+err.Error())
+		return
 	}
+	Respond(s, i, "Successfully created and gave new vanity role")
 }
 
 // Handler for rem_vanity_role
@@ -1082,14 +1126,14 @@ func RemVanityRoleHandler(s *discordgo.Session, i *discordgo.InteractionCreate) 
 		return
 	}
 	//Update database
-	ch := make(chan (int), 1)
-	go database.Repo.UpdateVanityRole(ch, i.Member.User.ID, "", i.GuildID)
-	r := AttemptDatabase(s, i, ch)
-	if r == 0 {
-		Respond(s, i, "Was unable to locate user for role removal")
-	} else if r > 0 {
-		Respond(s, i, "Successfully removed vanity role")
+	err = database.Repo.UpdateVanityRole(i.Member.User.ID, "", i.GuildID)
+	response := ""
+	if err != nil {
+		response = "Error updating database: " + err.Error()
+	} else {
+		response = "Successfully removed role"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for create_assignments_billboard
@@ -1132,12 +1176,14 @@ func CreateAssignmentsBillboardHandler(s *discordgo.Session, i *discordgo.Intera
 		Channel: i.ChannelID,
 		Message: msg.ID,
 	}
-	ch := make(chan (int), 1)
-	go database.Repo.AddRolesBillboard(ch, bb)
-	r := AttemptDatabase(s, i, ch)
-	if r > -1 {
-		Respond(s, i, "Successfully added roles billboard")
+	err = database.Repo.AddRolesBillboard(bb)
+	response := ""
+	if err != nil {
+		response = "Error updating database: " + err.Error()
+	} else {
+		response = "Successfully created assignments billboard"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for delete_assignments_billboard
@@ -1145,14 +1191,16 @@ func DeleteAssignmentsBillboardHandler(s *discordgo.Session, i *discordgo.Intera
 	LogCommand(i, "delete_assignments_billboard")
 
 	//Removing roles billboard from DB
-	ch := make(chan (int), 1)
-	go database.Repo.RemoveRolesBillboard(ch, i.GuildID)
-	r := AttemptDatabase(s, i, ch)
-	if r == 0 {
-		Respond(s, i, "Was unable to locate billboard to be removed")
-	} else if r > 0 {
-		Respond(s, i, "Successfully removed billboard")
+	done, err := database.Repo.RemoveRolesBillboard(i.GuildID)
+	response := ""
+	if err != nil {
+		response = "Error removing billboard from database: " + err.Error()
+	} else if !done {
+		response = "Could not locate billboard for removal"
+	} else {
+		response = "Successfully removed billboard from database"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for create_colors_billboard
@@ -1195,12 +1243,14 @@ func CreateColorsBillboardHandler(s *discordgo.Session, i *discordgo.Interaction
 		Channel: i.ChannelID,
 		Message: msg.ID,
 	}
-	ch := make(chan (int), 1)
-	go database.Repo.AddColorsBillboard(ch, bb)
-	r := AttemptDatabase(s, i, ch)
-	if r > -1 {
-		Respond(s, i, "Successfully added colors billboard")
+	err = database.Repo.AddColorsBillboard(bb)
+	response := ""
+	if err != nil {
+		response = "Error updating database: " + err.Error()
+	} else {
+		response = "Successfully created colors billboard"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for delete_colors_billboard
@@ -1208,14 +1258,16 @@ func DeleteColorsBillboardHandler(s *discordgo.Session, i *discordgo.Interaction
 	LogCommand(i, "delete_colors_billboard")
 
 	//Removing roles billboard from DB
-	ch := make(chan (int), 1)
-	go database.Repo.RemoveColorsBillboard(ch, i.GuildID)
-	r := AttemptDatabase(s, i, ch)
-	if r == 0 {
-		Respond(s, i, "Was unable to locate billboard to be removed")
-	} else if r > 0 {
-		Respond(s, i, "Successfully removed billboard")
+	done, err := database.Repo.RemoveColorsBillboard(i.GuildID)
+	response := ""
+	if err != nil {
+		response = "Error removing billboard from database: " + err.Error()
+	} else if !done {
+		response = "Could not locate billboard for removal"
+	} else {
+		response = "Successfully removed billboard from database"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for refresh_all_billboards
@@ -1238,12 +1290,14 @@ func AddNotificationChannelHandler(s *discordgo.Session, i *discordgo.Interactio
 	cha.Channel = i.ChannelID
 
 	//Add channel to DB
-	ch := make(chan (int), 1)
-	go database.Repo.AddNotificationChannel(ch, cha)
-	r := AttemptDatabase(s, i, ch)
-	if r > -1 {
-		Respond(s, i, "Successfully added notifications channel")
+	err := database.Repo.AddNotificationChannel(cha)
+	response := ""
+	if err != nil {
+		response = "Error adding notification channel to database: " + err.Error()
+	} else {
+		response = "Successfully added notification channel to database"
 	}
+	Respond(s, i, response)
 }
 
 // Handler for send_notification
@@ -1264,27 +1318,7 @@ func SendNotificationHandler(s *discordgo.Session, i *discordgo.InteractionCreat
 		return
 	}
 
-	for i := 0; i < len(message); i++ {
-		if message[i] != '\\' {
-			continue
-		}
-		if i == len(message)-1 || (message[i+1] != 'n' && message[i+1] != '\\') {
-			continue
-		}
-		if message[i+1] == 'n' {
-			after := ""
-			if len(message) > i+1 {
-				after = message[i+2:]
-			}
-			message = message[:i] + "\n" + after
-		} else if message[i+1] == '\\' {
-			after := ""
-			if len(message) > i+1 {
-				after = message[i+2:]
-			}
-			message = message[:i] + "\\" + after
-		}
-	}
+	//TODO: Add basic message parsing to insert linebreaks
 
 	good := 0
 	bad := 0
@@ -1298,12 +1332,6 @@ func SendNotificationHandler(s *discordgo.Session, i *discordgo.InteractionCreat
 		}
 	}
 	Respond(s, i, fmt.Sprintf("%d messages sent successfully\n%d messages failed to send", good, bad))
-}
-
-// Handler for check_db
-func CheckDBHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	LogCommand(i, "check_db")
-	Respond(s, i, fmt.Sprintf("Queued database changes: %d\nDatabase errors this session: %d", DatabaseOps, DatabaseErrs))
 }
 
 // Creates handlers for all slash commands based on relationship defined in commandHandlers

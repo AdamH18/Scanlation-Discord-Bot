@@ -23,401 +23,406 @@ func (r *SQLiteRepository) Initialize() error {
 }
 
 // Add reminder entry to DB
-func (r *SQLiteRepository) AddReminder(ch chan (int), rem Reminder) {
-	defer close(ch)
+func (r *SQLiteRepository) AddReminder(rem Reminder) error {
 	//No reminder should repeat more often than once a day
 	days := int64(math.Max(float64(rem.Days), 1.0))
-	res := r.RemindersExec("INSERT INTO reminders(guild, channel, user, days, message, repeat, time) values(?, ?, ?, ?, ?, ?, ?)", rem.Guild, rem.Channel, rem.User, days, rem.Message, rem.Repeat, rem.Time)
-	if res != nil {
-		ch <- 0
-	} else {
-		ch <- -1
+	_, err := r.RemindersExec("INSERT INTO reminders(guild, channel, user, days, message, repeat, time) values(?, ?, ?, ?, ?, ?, ?)", rem.Guild, rem.Channel, rem.User, days, rem.Message, rem.Repeat, rem.Time)
+
+	if err != nil {
+		return err
 	}
+
+	return nil
 }
 
 // Add series entry to DB
-func (r *SQLiteRepository) AddSeries(ch chan (int), ser Series) {
-	defer close(ch)
-	res := r.SeriesExec(ser.Guild, "INSERT INTO series(name_sh, name_full, guild, ping_role, repo_link) values(?, ?, ?, ?, ?)", strings.ToLower(ser.NameSh), ser.NameFull, ser.Guild, ser.PingRole, ser.RepoLink)
-	if res != nil {
-		ch <- 0
-	} else {
-		ch <- -1
+func (r *SQLiteRepository) AddSeries(ser Series) error {
+	_, err := r.SeriesExec(ser.Guild, "INSERT INTO series(name_sh, name_full, guild, ping_role, repo_link) values(?, ?, ?, ?, ?)", strings.ToLower(ser.NameSh), ser.NameFull, ser.Guild, ser.PingRole, ser.RepoLink)
+
+	if err != nil {
+		return err
 	}
+
+	return nil
 }
 
 // Add channel entry to DB
-func (r *SQLiteRepository) AddChannel(ch chan (int), cha Channel) {
-	defer close(ch)
-	res := r.ChannelsExec("INSERT INTO channels(channel, series, guild) values(?, ?, ?)", cha.Channel, strings.ToLower(cha.Series), cha.Guild)
-	if res != nil {
-		ch <- 0
-	} else {
-		ch <- -1
+func (r *SQLiteRepository) AddChannel(cha Channel) error {
+	_, err := r.ChannelsExec("INSERT INTO channels(channel, series, guild) values(?, ?, ?)", cha.Channel, strings.ToLower(cha.Series), cha.Guild)
+
+	if err != nil {
+		return err
 	}
+
+	return nil
 }
 
 // Add user entry to DB
-func (r *SQLiteRepository) AddUser(ch chan (int), usr User) {
-	defer close(ch)
-	res := r.UsersExec(usr.Guild, "INSERT INTO users(user, color, vanity_role, guild) values(?, ?, ?, ?)", usr.User, usr.Color, usr.VanityRole, usr.Guild)
-	if res != nil {
-		ch <- 0
-	} else {
-		ch <- -1
+func (r *SQLiteRepository) AddUser(usr User) error {
+	_, err := r.UsersExec(usr.Guild, "INSERT INTO users(user, color, vanity_role, guild) values(?, ?, ?, ?)", usr.User, usr.Color, usr.VanityRole, usr.Guild)
+
+	if err != nil {
+		return err
 	}
+
+	return nil
 }
 
 // Add job entry to DB
-func (r *SQLiteRepository) AddJob(ch chan (int), job Job) {
-	defer close(ch)
-	res := r.JobsExec("INSERT INTO jobs(job_sh, job_full, guild) values(?, ?, ?)", strings.ToLower(job.JobSh), job.JobFull, job.Guild)
-	if res != nil {
-		ch <- 0
-	} else {
-		ch <- -1
+func (r *SQLiteRepository) AddJob(job Job) error {
+	_, err := r.JobsExec("INSERT INTO jobs(job_sh, job_full, guild) values(?, ?, ?)", strings.ToLower(job.JobSh), job.JobFull, job.Guild)
+
+	if err != nil {
+		return err
 	}
+
+	return nil
 }
 
 // Add member role entry to DB
-func (r *SQLiteRepository) AddMemberRole(ch chan (int), mem MemberRole) {
-	defer close(ch)
-	res := r.MemberRoleExec("INSERT INTO member_role(guild, role_id) values(?, ?)", mem.Guild, mem.Role)
-	if res != nil {
-		ch <- 0
-	} else {
-		ch <- -1
+func (r *SQLiteRepository) AddMemberRole(mem MemberRole) error {
+	_, err := r.MemberRoleExec("INSERT INTO member_role(guild, role_id) values(?, ?)", mem.Guild, mem.Role)
+
+	if err != nil {
+		return err
 	}
+
+	return nil
 }
 
 // Add series channel entry to DB
-func (r *SQLiteRepository) AddSeriesChannels(ch chan (int), sec SeriesChannels) {
-	defer close(ch)
-	res := r.SeriesChannelsExec("REPLACE INTO series_channels(top, bottom, guild) values(?, ?, ?)", sec.Top, sec.Bottom, sec.Guild)
-	if res != nil {
-		ch <- 0
-	} else {
-		ch <- -1
+func (r *SQLiteRepository) AddSeriesChannels(sec SeriesChannels) error {
+	_, err := r.SeriesChannelsExec("REPLACE INTO series_channels(top, bottom, guild) values(?, ?, ?)", sec.Top, sec.Bottom, sec.Guild)
+
+	if err != nil {
+		return err
 	}
+
+	return nil
 }
 
 // Add roles billboard entry to DB
-func (r *SQLiteRepository) AddRolesBillboard(ch chan (int), bb JobBB) {
-	defer close(ch)
-	res := r.RolesBillboardsExec("INSERT INTO roles_billboards(guild, channel, message) values(?, ?, ?)", bb.Guild, bb.Channel, bb.Message)
-	if res != nil {
-		ch <- 0
-	} else {
-		ch <- -1
+func (r *SQLiteRepository) AddRolesBillboard(bb JobBB) error {
+	_, err := r.RolesBillboardsExec("INSERT INTO roles_billboards(guild, channel, message) values(?, ?, ?)", bb.Guild, bb.Channel, bb.Message)
+
+	if err != nil {
+		return err
 	}
+
+	return nil
 }
 
 // Add colors billboard entry to DB
-func (r *SQLiteRepository) AddColorsBillboard(ch chan (int), bb ColorBB) {
-	defer close(ch)
-	res := r.RolesBillboardsExec("INSERT INTO colors_billboards(guild, channel, message) values(?, ?, ?)", bb.Guild, bb.Channel, bb.Message)
-	if res != nil {
-		ch <- 0
-	} else {
-		ch <- -1
+func (r *SQLiteRepository) AddColorsBillboard(bb ColorBB) error {
+	_, err := r.RolesBillboardsExec("INSERT INTO colors_billboards(guild, channel, message) values(?, ?, ?)", bb.Guild, bb.Channel, bb.Message)
+
+	if err != nil {
+		return err
 	}
+
+	return nil
 }
 
 // Add assignment entry to DB
-func (r *SQLiteRepository) AddAssignment(ch chan (int), sea SeriesAssignment) {
-	defer close(ch)
-	res := r.SeriesAssignmentsExec(sea.Guild, "INSERT INTO series_assignments(user, series, job, guild) values(?, ?, ?, ?)", sea.User, strings.ToLower(sea.Series), strings.ToLower(sea.Job), sea.Guild)
-	if res != nil {
-		ch <- 0
-	} else {
-		ch <- -1
+func (r *SQLiteRepository) AddAssignment(sea SeriesAssignment) error {
+	_, err := r.SeriesAssignmentsExec(sea.Guild, "INSERT INTO series_assignments(user, series, job, guild) values(?, ?, ?, ?)", sea.User, strings.ToLower(sea.Series), strings.ToLower(sea.Job), sea.Guild)
+
+	if err != nil {
+		return err
 	}
+
+	return nil
 }
 
 // Add notification channel entry to DB
-func (r *SQLiteRepository) AddNotificationChannel(ch chan (int), cha NotificationChannel) {
-	defer close(ch)
-	res := r.NotificationChannelsExec("REPLACE INTO notification_channels(guild, channel) values(?, ?)", cha.Guild, cha.Channel)
-	if res != nil {
-		ch <- 0
-	} else {
-		ch <- -1
+func (r *SQLiteRepository) AddNotificationChannel(cha NotificationChannel) error {
+	_, err := r.NotificationChannelsExec("REPLACE INTO notification_channels(guild, channel) values(?, ?)", cha.Guild, cha.Channel)
+
+	if err != nil {
+		return err
 	}
+
+	return nil
 }
 
 // Remove reminder entry by ID
-func (r *SQLiteRepository) RemoveReminder(ch chan (int), id int64, guild string) {
-	defer close(ch)
-	res := r.RemindersExec("DELETE FROM reminders WHERE ROWID = ? AND guild = ?", id, guild)
+func (r *SQLiteRepository) RemoveReminder(id int64, guild string) (int64, error) {
+	res, err := r.RemindersExec("DELETE FROM reminders WHERE ROWID = ? AND guild = ?", id, guild)
+
+	if err != nil {
+		return 0, err
+	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
-		log.Println("RowsAffected() error: " + err.Error())
-		ch <- -1
-		return
+		return 0, err
 	}
 
-	ch <- int(rows)
-}
-
-// Remove reminder entry only if it belongs to specified user
-func (r *SQLiteRepository) RemoveUserReminder(ch chan (int), id int64, userID string, guild string) {
-	defer close(ch)
-	res := r.RemindersExec("DELETE FROM reminders WHERE ROWID = ? AND user = ? AND guild = ?", id, userID, guild)
-
-	rows, err := res.RowsAffected()
-	if err != nil {
-		log.Println("RowsAffected() error: " + err.Error())
-		ch <- -1
-		return
-	}
-
-	ch <- int(rows)
+	return rows, nil
 }
 
 // Remove series entry and all references to series in other tables
-func (r *SQLiteRepository) RemoveSeries(ch chan (int), nameSh string, nameFull string, guildId string) {
-	defer close(ch)
-	res := r.SeriesExec(guildId, "DELETE FROM series WHERE name_sh = ? AND name_full = ? AND guild = ?", nameSh, nameFull, guildId)
+func (r *SQLiteRepository) RemoveSeries(nameSh string, nameFull string, guildId string) (bool, error) {
+	res, err := r.SeriesExec(guildId, "DELETE FROM series WHERE name_sh = ? AND name_full = ? AND guild = ?", nameSh, nameFull, guildId)
+
+	if err != nil {
+		return false, err
+	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
-		log.Println("RowsAffected() error: " + err.Error())
-		ch <- -1
-		return
+		return false, err
 	}
 
-	ch <- int(rows)
+	done := rows > 0
 	// If a series was removed, remove all references to it from other tables. Can't be assed to error check, not a big deal if this fails
-	if rows > 0 {
-		go r.ChannelsExec("DELETE FROM channels WHERE series = ? AND guild = ?", nameSh, guildId)
-		go r.SeriesAssignmentsExec(guildId, "DELETE FROM series_assignments WHERE series = ? AND guild = ?", nameSh, guildId)
-		go r.SeriesBillboardsExec("DELETE FROM series_billboard WHERE series = ? AND guild = ?", nameSh, guildId)
+	if done {
+		r.ChannelsExec("DELETE FROM channels WHERE series = ? AND guild = ?", nameSh, guildId)
+		r.SeriesAssignmentsExec(guildId, "DELETE FROM series_assignments WHERE series = ? AND guild = ?", nameSh, guildId)
+		r.SeriesBillboardsExec("DELETE FROM series_billboard WHERE series = ? AND guild = ?", nameSh, guildId)
 	}
+
+	return done, nil
 }
 
 // Remove channel
-func (r *SQLiteRepository) RemoveChannel(ch chan (int), channel string) {
-	defer close(ch)
-	res := r.ChannelsExec("DELETE FROM channels WHERE channel = ?", channel)
+func (r *SQLiteRepository) RemoveChannel(channel string) (bool, error) {
+	res, err := r.ChannelsExec("DELETE FROM channels WHERE channel = ?", channel)
+
+	if err != nil {
+		return false, err
+	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
-		log.Println("RowsAffected() error: " + err.Error())
-		ch <- -1
-		return
+		return false, err
 	}
 
-	ch <- int(rows)
+	return rows > 0, nil
 }
 
 // Remove user and all references to user in other tables
-func (r *SQLiteRepository) RemoveUser(ch chan (int), userId string, guildId string) {
-	defer close(ch)
-	res := r.UsersExec(guildId, "DELETE FROM users WHERE user = ? AND guild = ?", userId, guildId)
+func (r *SQLiteRepository) RemoveUser(userId string, guildId string) (bool, error) {
+	res, err := r.UsersExec(guildId, "DELETE FROM users WHERE user = ? AND guild = ?", userId, guildId)
+
+	if err != nil {
+		return false, err
+	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
-		log.Println("RowsAffected() error: " + err.Error())
-		ch <- -1
-		return
+		return false, err
 	}
 
-	ch <- int(rows)
+	done := rows > 0
 	// If a user was removed, remove all references to them from other tables. Can't be assed to error check, not a big deal if this fails
-	if rows > 0 {
-		go r.RemindersExec("DELETE FROM reminders WHERE user = ? AND guild = ?", userId, guildId)
-		go r.SeriesAssignmentsExec(guildId, "DELETE FROM series_assignments WHERE user = ? AND guild = ?", userId, guildId)
+	if done {
+		r.RemindersExec("DELETE FROM reminders WHERE user = ? AND guild = ?", userId, guildId)
+		r.SeriesAssignmentsExec(guildId, "DELETE FROM series_assignments WHERE user = ? AND guild = ?", userId, guildId)
 	}
+
+	return done, nil
 }
 
 // Remove job and all references to job in other tables
-func (r *SQLiteRepository) RemoveJob(ch chan (int), nameSh string, guildId string) {
-	defer close(ch)
-	res := r.JobsExec("DELETE FROM jobs WHERE job_sh = ? AND guild = ?", nameSh, guildId)
+func (r *SQLiteRepository) RemoveJob(nameSh string, guildId string) (bool, error) {
+	res, err := r.JobsExec("DELETE FROM jobs WHERE job_sh = ? AND guild = ?", nameSh, guildId)
+
+	if err != nil {
+		return false, err
+	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
-		log.Println("RowsAffected() error: " + err.Error())
-		ch <- -1
-		return
+		return false, err
 	}
 
-	ch <- int(rows)
+	done := rows > 0
 	// If a job was removed, remove all references to it from other tables. Can't be assed to error check, not a big deal if this fails
-	if rows > 0 {
-		go r.SeriesAssignmentsExec(guildId, "DELETE FROM series_assignments WHERE job = ? AND guild = ?", nameSh, guildId)
+	if done {
+		r.SeriesAssignmentsExec(guildId, "DELETE FROM series_assignments WHERE job = ? AND guild = ?", nameSh, guildId)
 	}
+
+	return done, nil
 }
 
 // Remove member role
-func (r *SQLiteRepository) RemoveMemberRole(ch chan (int), guild string) {
-	defer close(ch)
-	res := r.MemberRoleExec("DELETE FROM member_role WHERE guild = ?", guild)
+func (r *SQLiteRepository) RemoveMemberRole(guild string) (bool, error) {
+	res, err := r.MemberRoleExec("DELETE FROM member_role WHERE guild = ?", guild)
+
+	if err != nil {
+		return false, err
+	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
-		log.Println("RowsAffected() error: " + err.Error())
-		ch <- -1
-		return
+		return false, err
 	}
 
-	ch <- int(rows)
+	return rows > 0, nil
 }
 
 // Remove series assignment
-func (r *SQLiteRepository) RemoveSeriesAssignment(ch chan (int), user string, series string, job string, guild string) {
-	defer close(ch)
-	res := r.SeriesAssignmentsExec(guild, "DELETE FROM series_assignments WHERE user = ? AND series = ? AND job = ? AND guild = ?", user, series, job, guild)
+func (r *SQLiteRepository) RemoveSeriesAssignment(user string, series string, job string, guild string) (bool, error) {
+	res, err := r.SeriesAssignmentsExec(guild, "DELETE FROM series_assignments WHERE user = ? AND series = ? AND job = ? AND guild = ?", user, series, job, guild)
+
+	if err != nil {
+		return false, err
+	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
-		log.Println("RowsAffected() error: " + err.Error())
-		ch <- -1
-		return
+		return false, err
 	}
 
-	ch <- int(rows)
+	return rows > 0, nil
 }
 
 // Remove all assignments for a user
-func (r *SQLiteRepository) RemoveAllAssignments(ch chan (int), user string, guild string) {
-	defer close(ch)
-	res := r.SeriesAssignmentsExec(guild, "DELETE FROM series_assignments WHERE user = ? AND guild = ?", user, guild)
+func (r *SQLiteRepository) RemoveAllAssignments(user string, guild string) (bool, error) {
+	res, err := r.SeriesAssignmentsExec(guild, "DELETE FROM series_assignments WHERE user = ? AND guild = ?", user, guild)
+
+	if err != nil {
+		return false, err
+	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
-		log.Println("RowsAffected() error: " + err.Error())
-		ch <- -1
-		return
+		return false, err
 	}
 
-	ch <- int(rows)
+	return rows > 0, nil
 }
 
 // Remove roles billboard
-func (r *SQLiteRepository) RemoveRolesBillboard(ch chan (int), guild string) {
-	defer close(ch)
-	res := r.RolesBillboardsExec("DELETE FROM roles_billboards WHERE guild = ?", guild)
+func (r *SQLiteRepository) RemoveRolesBillboard(guild string) (bool, error) {
+	res, err := r.RolesBillboardsExec("DELETE FROM roles_billboards WHERE guild = ?", guild)
+
+	if err != nil {
+		return false, err
+	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
-		log.Println("RowsAffected() error: " + err.Error())
-		ch <- -1
-		return
+		return false, err
 	}
 
-	ch <- int(rows)
+	return rows > 0, nil
 }
 
 // Remove colors billboard
-func (r *SQLiteRepository) RemoveColorsBillboard(ch chan (int), guild string) {
-	defer close(ch)
-	res := r.ColorsBillboardsExec("DELETE FROM colors_billboards WHERE guild = ?", guild)
+func (r *SQLiteRepository) RemoveColorsBillboard(guild string) (bool, error) {
+	res, err := r.ColorsBillboardsExec("DELETE FROM colors_billboards WHERE guild = ?", guild)
+
+	if err != nil {
+		return false, err
+	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
-		log.Println("RowsAffected() error: " + err.Error())
-		ch <- -1
-		return
+		return false, err
 	}
 
-	ch <- int(rows)
+	return rows > 0, nil
 }
 
 // Update series name
-func (r *SQLiteRepository) UpdateSeriesName(ch chan (int), nameSh string, newName string, guild string) {
-	defer close(ch)
-	res := r.SeriesExec(guild, "UPDATE series SET name_full = ? WHERE name_sh = ? AND guild = ?", newName, nameSh, guild)
+func (r *SQLiteRepository) UpdateSeriesName(nameSh string, newName string, guild string) (bool, error) {
+	res, err := r.SeriesExec(guild, "UPDATE series SET name_full = ? WHERE name_sh = ? AND guild = ?", newName, nameSh, guild)
+
+	if err != nil {
+		return false, err
+	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
-		log.Println("RowsAffected() error: " + err.Error())
-		ch <- -1
-		return
+		return false, err
 	}
 
-	ch <- int(rows)
+	return rows > 0, nil
 }
 
 // Update series repo link
-func (r *SQLiteRepository) UpdateSeriesRepoLink(ch chan (int), nameSh string, newLink string, guild string) {
-	defer close(ch)
-	res := r.SeriesExec(guild, "UPDATE series SET repo_link = ? WHERE name_sh = ? AND guild = ?", newLink, nameSh, guild)
+func (r *SQLiteRepository) UpdateSeriesRepoLink(nameSh string, newLink string, guild string) (bool, error) {
+	res, err := r.SeriesExec(guild, "UPDATE series SET repo_link = ? WHERE name_sh = ? AND guild = ?", newLink, nameSh, guild)
+
+	if err != nil {
+		return false, err
+	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
-		log.Println("RowsAffected() error: " + err.Error())
-		ch <- -1
-		return
+		return false, err
 	}
 
-	ch <- int(rows)
+	return rows > 0, nil
 }
 
 // Update user's color to new one
-func (r *SQLiteRepository) UpdateColor(ch chan (int), user string, color string, guild string) {
-	defer close(ch)
-	res := r.UsersExec(guild, "UPDATE users SET color = ? WHERE user = ? AND guild = ?", color, user, guild)
+func (r *SQLiteRepository) UpdateColor(user string, color string, guild string) error {
+	_, err := r.UsersExec(guild, "UPDATE users SET color = ? WHERE user = ? AND guild = ?", color, user, guild)
 
-	rows, err := res.RowsAffected()
 	if err != nil {
-		log.Println("RowsAffected() error: " + err.Error())
-		ch <- -1
-		return
+		return err
 	}
 
-	ch <- int(rows)
+	return nil
 }
 
 // Update user's vanity role to new one
-func (r *SQLiteRepository) UpdateVanityRole(ch chan (int), user string, role string, guild string) {
-	defer close(ch)
-	res := r.UsersExec(guild, "UPDATE users SET vanity_role = ? WHERE user = ? AND guild = ?", role, user, guild)
+func (r *SQLiteRepository) UpdateVanityRole(user string, role string, guild string) error {
+	_, err := r.UsersExec(guild, "UPDATE users SET vanity_role = ? WHERE user = ? AND guild = ?", role, user, guild)
 
-	rows, err := res.RowsAffected()
 	if err != nil {
-		log.Println("RowsAffected() error: " + err.Error())
-		ch <- -1
-		return
+		return err
 	}
 
-	ch <- int(rows)
+	return nil
 }
 
 // Add update top of series channels entry
-func (r *SQLiteRepository) UpdateSeriesChannelsTop(ch chan (int), cat string, guild string) {
-	defer close(ch)
-	res := r.SeriesChannelsExec("UPDATE series_channels SET top = ? WHERE guild = ?", cat, guild)
+func (r *SQLiteRepository) UpdateSeriesChannelsTop(cat string, guild string) {
+	_, err := r.SeriesChannelsExec("UPDATE series_channels SET top = ? WHERE guild = ?", cat, guild)
 
-	rows, err := res.RowsAffected()
 	if err != nil {
-		log.Println("RowsAffected() error: " + err.Error())
-		ch <- -1
-		return
+		log.Print("Error updating top of series channels: " + err.Error())
 	}
-
-	ch <- int(rows)
 }
 
 // Add update bottom of series channels entry
-func (r *SQLiteRepository) UpdateSeriesChannelsBottom(ch chan (int), cat string, guild string) {
-	defer close(ch)
-	res := r.SeriesChannelsExec("UPDATE series_channels SET bottom = ? WHERE guild = ?", cat, guild)
+func (r *SQLiteRepository) UpdateSeriesChannelsBottom(cat string, guild string) {
+	_, err := r.SeriesChannelsExec("UPDATE series_channels SET bottom = ? WHERE guild = ?", cat, guild)
 
-	rows, err := res.RowsAffected()
 	if err != nil {
-		log.Println("RowsAffected() error: " + err.Error())
-		ch <- -1
-		return
+		log.Print("Error updating bottom of series channels: " + err.Error())
 	}
-
-	ch <- int(rows)
 }
 
 // Take expired reminder and add days field to alarm time to set next reminder
-func (r *SQLiteRepository) ResetReminder(id int64) {
-	r.RemindersExec("UPDATE reminders SET time = datetime(time, '+' || (SELECT CAST(days AS varchar(20))) || ' days') WHERE ROWID = ?", id)
+func (r *SQLiteRepository) ResetReminder(id int64) error {
+	_, err := r.RemindersExec("UPDATE reminders SET time = datetime(time, '+' || (SELECT CAST(days AS varchar(20))) || ' days') WHERE ROWID = ?", id)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Remove reminder entry only if it belongs to specified user
+func (r *SQLiteRepository) RemoveUserReminder(id int64, userID string, guild string) (int64, error) {
+	res, err := r.RemindersExec("DELETE FROM reminders WHERE ROWID = ? AND user = ? AND guild = ?", id, userID, guild)
+
+	if err != nil {
+		return 0, err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return rows, nil
 }
 
 // Return all reminders belonging to a specific user

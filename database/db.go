@@ -12,8 +12,6 @@ var (
 	SeriesCh      chan func() (string, string)
 	AssignmentsCh chan string
 	ColorsCh      chan string
-	ActionsCh     chan bool
-	ErrorsCh      chan func() (string, []any, string)
 
 	DBWriterCh chan ExecIn
 	Quit       chan struct{}
@@ -74,11 +72,9 @@ func StartDatabase(loc string) {
 	go DBWriter()
 }
 
-func RegisterChannels(serc chan func() (string, string), assc chan string, colc chan string, actc chan bool, errc chan func() (string, []any, string), quit chan struct{}) {
+func RegisterChannels(serc chan func() (string, string), assc chan string, colc chan string, quit chan struct{}) {
 	SeriesCh = serc
 	AssignmentsCh = assc
 	ColorsCh = colc
-	ActionsCh = actc
-	ErrorsCh = errc
 	Quit = quit
 }

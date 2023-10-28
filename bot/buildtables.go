@@ -11,6 +11,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+// TODO: Fix tables to not error on user retrieval errors, just don't list that user
+
 // Returns table with all values in reminders DB included
 func BuildVerboseRemindersTable(rems []database.Reminder) (string, error) {
 	var buf strings.Builder
@@ -69,10 +71,6 @@ func BuildHelpEmbed() *discordgo.MessageEmbed {
 					"**vanity_role** - Give yourself a vanity role with a custom name and color. If the server is getting close to maximum roles, you can copy someone else's role instead\n" +
 					"**rem_vanity_role** - Get rid of your vanity role. Never actually deletes it from the server\n" +
 					"**my_settings** - Gives you an overview of all your settings in this server",
-			},
-			{
-				Name:  "Misc:",
-				Value: "**check_db** - Check the current status of the database",
 			},
 		},
 	}
