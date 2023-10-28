@@ -161,6 +161,22 @@ func (r *SQLiteRepository) RemoveReminder(id int64, guild string) (int64, error)
 	return rows, nil
 }
 
+// Remove reminder entry only if it belongs to specified user
+func (r *SQLiteRepository) RemoveUserReminder(id int64, userID string, guild string) (int64, error) {
+	res, err := r.RemindersExec("DELETE FROM reminders WHERE ROWID = ? AND user = ? AND guild = ?", id, userID, guild)
+
+	if err != nil {
+		return 0, err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return rows, nil
+}
+
 // Remove series entry and all references to series in other tables
 func (r *SQLiteRepository) RemoveSeries(nameSh string, nameFull string, guildId string) (bool, error) {
 	res, err := r.SeriesExec(guildId, "DELETE FROM series WHERE name_sh = ? AND name_full = ? AND guild = ?", nameSh, nameFull, guildId)
@@ -407,22 +423,6 @@ func (r *SQLiteRepository) ResetReminder(id int64) error {
 	}
 
 	return nil
-}
-
-// Remove reminder entry only if it belongs to specified user
-func (r *SQLiteRepository) RemoveUserReminder(id int64, userID string, guild string) (int64, error) {
-	res, err := r.RemindersExec("DELETE FROM reminders WHERE ROWID = ? AND user = ? AND guild = ?", id, userID, guild)
-
-	if err != nil {
-		return 0, err
-	}
-
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return 0, err
-	}
-
-	return rows, nil
 }
 
 // Return all reminders belonging to a specific user

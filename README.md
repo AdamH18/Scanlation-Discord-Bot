@@ -93,4 +93,3 @@ docker compose up -d
 | /refresh_all_billboards | admin only | Refreshes all billboards on the server |
 | /add_notification_channel | admin only | Sets channel to receive messages containing updates from bot owner |
 | /send_notification | owner only | Send message to all registered notification channels |
-| /check_db | all | Check status of database if commands appear unresponsive |

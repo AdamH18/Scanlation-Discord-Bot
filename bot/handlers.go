@@ -1318,7 +1318,27 @@ func SendNotificationHandler(s *discordgo.Session, i *discordgo.InteractionCreat
 		return
 	}
 
-	//TODO: Add basic message parsing to insert linebreaks
+	for i := 0; i < len(message); i++ {
+		if message[i] != '\\' {
+			continue
+		}
+		if i == len(message)-1 || (message[i+1] != 'n' && message[i+1] != '\\') {
+			continue
+		}
+		if message[i+1] == 'n' {
+			after := ""
+			if len(message) > i+1 {
+				after = message[i+2:]
+			}
+			message = message[:i] + "\n" + after
+		} else if message[i+1] == '\\' {
+			after := ""
+			if len(message) > i+1 {
+				after = message[i+2:]
+			}
+			message = message[:i] + "\\" + after
+		}
+	}
 
 	good := 0
 	bad := 0
