@@ -96,6 +96,7 @@ func DiscordCommand(cmds []*discordgo.ApplicationCommand, n string) bool {
 	return false
 }
 
+// TODO: Add series billboard to creation
 // Creates new channels for a series
 func CreateChannels(ser database.Series) error {
 	//Get registered bounds for series channels

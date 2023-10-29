@@ -37,7 +37,7 @@ func (r *SQLiteRepository) RemindersExec(query string, args ...any) (sql.Result,
 }
 
 // Changing the series table can affect series billboards (repo_link or name_full)
-func (r *SQLiteRepository) SeriesExec(guild string, query string, args ...any) (sql.Result, error) {
+func (r *SQLiteRepository) SeriesExec(guild string, series string, query string, args ...any) (sql.Result, error) {
 	res, err := r.SerielExec(query, args...)
 	//If query errored, return error
 	if err != nil {
@@ -52,38 +52,8 @@ func (r *SQLiteRepository) SeriesExec(guild string, query string, args ...any) (
 	if num == 0 {
 		//If nothing changed, just leave
 		return res, nil
-	} else if num > 1 {
-		//If more than one series changed, update all series billboards in guild
-		SeriesCh <- func() (string, string) { return guild, "" }
-		return res, nil
 	}
-	//If only one update, try to get last insertion value
-	id, err := res.LastInsertId()
-	if err != nil {
-		//If error, no clue why, so don't do anything (maybe deleted value? Behavior is not well documented)
-		log.Println("Error getting last insert ID: " + err.Error())
-		return res, nil
-	}
-	//Get name of single updated series
-	quer, err := r.db.Query("SELECT name_sh FROM series WHERE ROWID = ?", id)
-	if err != nil {
-		log.Println("Error getting data for last insert: " + err.Error())
-		return res, nil
-	}
-	defer quer.Close()
-	var series string
-	if quer.Next() {
-		err = quer.Scan(&series)
-		if err != nil {
-			log.Println("Failed to read last insert data: " + err.Error())
-			return res, nil
-		}
-	} else {
-		log.Println("Last insert value not found")
-		SeriesCh <- func() (string, string) { return guild, "" }
-		return res, nil
-	}
-	//If single series could be identified, update billboard
+	//Otherwise update billboard based on passed values
 	SeriesCh <- func() (string, string) { return guild, series }
 	return res, nil
 }
@@ -105,59 +75,27 @@ func (r *SQLiteRepository) UsersExec(guild string, query string, args ...any) (s
 }
 
 // Changing the assignments table can affect assignments and series billboards
-func (r *SQLiteRepository) SeriesAssignmentsExec(guild string, query string, args ...any) (sql.Result, error) {
+func (r *SQLiteRepository) SeriesAssignmentsExec(guild string, series string, query string, args ...any) (sql.Result, error) {
 	res, err := r.SerielExec(query, args...)
 	if err != nil {
 		return res, err
 	}
-	//Certainly update assignments billboard
-	AssignmentsCh <- guild
 
 	num, err := res.RowsAffected()
 	if err != nil {
 		//No clue why this would error out, but just update everything
 		log.Println("Error getting number of affected rows: " + err.Error())
+		AssignmentsCh <- guild
 		SeriesCh <- func() (string, string) { return guild, "" }
 		return res, nil
 	}
 	if num == 0 {
 		//If nothing changed, just leave
 		return res, nil
-	} else if num > 1 {
-		//If more than one series changed, update all series billboards in guild
-		SeriesCh <- func() (string, string) { return guild, "" }
-		return res, nil
 	}
-	//If only one update, try to get last insertion value
-	id, err := res.LastInsertId()
-	if err != nil {
-		//If error, no clue why, so update everything (maybe deleted value? Behavior is not well documented)
-		log.Println("Error getting last insert ID: " + err.Error())
-		SeriesCh <- func() (string, string) { return guild, "" }
-		return res, nil
-	}
-	//Get name of single updated series. If anything goes wrong, just update everything
-	quer, err := r.db.Query("SELECT series FROM series_assignments WHERE ROWID = ?", id)
-	if err != nil {
-		log.Println("Error getting data for last insert: " + err.Error())
-		SeriesCh <- func() (string, string) { return guild, "" }
-		return res, nil
-	}
-	defer quer.Close()
-	var series string
-	if quer.Next() {
-		err = quer.Scan(&series)
-		if err != nil {
-			log.Println("Failed to read last insert data: " + err.Error())
-			SeriesCh <- func() (string, string) { return guild, "" }
-			return res, nil
-		}
-	} else {
-		log.Println("Last insert value not found")
-		SeriesCh <- func() (string, string) { return guild, "" }
-		return res, nil
-	}
-	//If single series could be identified, update billboard
+
+	//If something changed, update billboards
+	AssignmentsCh <- guild
 	SeriesCh <- func() (string, string) { return guild, series }
 	return res, nil
 }

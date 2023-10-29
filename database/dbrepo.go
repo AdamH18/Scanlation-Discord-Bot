@@ -38,7 +38,7 @@ func (r *SQLiteRepository) AddReminder(rem Reminder) error {
 
 // Add series entry to DB
 func (r *SQLiteRepository) AddSeries(ser Series) error {
-	_, err := r.SeriesExec(ser.Guild, "INSERT INTO series(name_sh, name_full, guild, ping_role, repo_link) values(?, ?, ?, ?, ?)", strings.ToLower(ser.NameSh), ser.NameFull, ser.Guild, ser.PingRole, ser.RepoLink)
+	_, err := r.SeriesExec(ser.Guild, ser.NameSh, "INSERT INTO series(name_sh, name_full, guild, ping_role, repo_link) values(?, ?, ?, ?, ?)", strings.ToLower(ser.NameSh), ser.NameFull, ser.Guild, ser.PingRole, ser.RepoLink)
 
 	if err != nil {
 		return err
@@ -115,7 +115,7 @@ func (r *SQLiteRepository) AddSeriesNote(ser SeriesNote) error {
 
 // Add roles billboard entry to DB
 func (r *SQLiteRepository) AddSeriesBillboard(bb SeriesBB) error {
-	_, err := r.RolesBillboardsExec("INSERT INTO series_billboards(series, guild, channel, message) values(?, ?, ?, ?)", bb.Series, bb.Guild, bb.Channel, bb.Message)
+	_, err := r.SeriesBillboardsExec("INSERT INTO series_billboards(series, guild, channel, message) values(?, ?, ?, ?)", bb.Series, bb.Guild, bb.Channel, bb.Message)
 
 	if err != nil {
 		return err
@@ -137,7 +137,7 @@ func (r *SQLiteRepository) AddRolesBillboard(bb JobBB) error {
 
 // Add colors billboard entry to DB
 func (r *SQLiteRepository) AddColorsBillboard(bb ColorBB) error {
-	_, err := r.RolesBillboardsExec("INSERT INTO colors_billboards(guild, channel, message) values(?, ?, ?)", bb.Guild, bb.Channel, bb.Message)
+	_, err := r.ColorsBillboardsExec("INSERT INTO colors_billboards(guild, channel, message) values(?, ?, ?)", bb.Guild, bb.Channel, bb.Message)
 
 	if err != nil {
 		return err
@@ -148,7 +148,7 @@ func (r *SQLiteRepository) AddColorsBillboard(bb ColorBB) error {
 
 // Add assignment entry to DB
 func (r *SQLiteRepository) AddAssignment(sea SeriesAssignment) error {
-	_, err := r.SeriesAssignmentsExec(sea.Guild, "INSERT INTO series_assignments(user, series, job, guild) values(?, ?, ?, ?)", sea.User, strings.ToLower(sea.Series), strings.ToLower(sea.Job), sea.Guild)
+	_, err := r.SeriesAssignmentsExec(sea.Guild, sea.Series, "INSERT INTO series_assignments(user, series, job, guild) values(?, ?, ?, ?)", sea.User, strings.ToLower(sea.Series), strings.ToLower(sea.Job), sea.Guild)
 
 	if err != nil {
 		return err
@@ -202,7 +202,7 @@ func (r *SQLiteRepository) RemoveUserReminder(id int64, userID string, guild str
 
 // Remove series entry and all references to series in other tables
 func (r *SQLiteRepository) RemoveSeries(nameSh string, nameFull string, guildId string) (bool, error) {
-	res, err := r.SeriesExec(guildId, "DELETE FROM series WHERE name_sh = ? AND name_full = ? AND guild = ?", nameSh, nameFull, guildId)
+	res, err := r.SeriesExec(guildId, nameSh, "DELETE FROM series WHERE name_sh = ? AND name_full = ? AND guild = ?", nameSh, nameFull, guildId)
 
 	if err != nil {
 		return false, err
@@ -217,7 +217,7 @@ func (r *SQLiteRepository) RemoveSeries(nameSh string, nameFull string, guildId 
 	// If a series was removed, remove all references to it from other tables. Can't be assed to error check, not a big deal if this fails
 	if done {
 		r.ChannelsExec("DELETE FROM channels WHERE series = ? AND guild = ?", nameSh, guildId)
-		r.SeriesAssignmentsExec(guildId, "DELETE FROM series_assignments WHERE series = ? AND guild = ?", nameSh, guildId)
+		r.SeriesAssignmentsExec(guildId, nameSh, "DELETE FROM series_assignments WHERE series = ? AND guild = ?", nameSh, guildId)
 		r.SeriesBillboardsExec("DELETE FROM series_billboards WHERE series = ? AND guild = ?", nameSh, guildId)
 	}
 
@@ -257,7 +257,7 @@ func (r *SQLiteRepository) RemoveUser(userId string, guildId string) (bool, erro
 	// If a user was removed, remove all references to them from other tables. Can't be assed to error check, not a big deal if this fails
 	if done {
 		r.RemindersExec("DELETE FROM reminders WHERE user = ? AND guild = ?", userId, guildId)
-		r.SeriesAssignmentsExec(guildId, "DELETE FROM series_assignments WHERE user = ? AND guild = ?", userId, guildId)
+		r.SeriesAssignmentsExec(guildId, "", "DELETE FROM series_assignments WHERE user = ? AND guild = ?", userId, guildId)
 	}
 
 	return done, nil
@@ -279,7 +279,7 @@ func (r *SQLiteRepository) RemoveJob(nameSh string, guildId string) (bool, error
 	done := rows > 0
 	// If a job was removed, remove all references to it from other tables. Can't be assed to error check, not a big deal if this fails
 	if done {
-		r.SeriesAssignmentsExec(guildId, "DELETE FROM series_assignments WHERE job = ? AND guild = ?", nameSh, guildId)
+		r.SeriesAssignmentsExec(guildId, "", "DELETE FROM series_assignments WHERE job = ? AND guild = ?", nameSh, guildId)
 	}
 
 	return done, nil
@@ -303,7 +303,7 @@ func (r *SQLiteRepository) RemoveMemberRole(guild string) (bool, error) {
 
 // Remove series assignment
 func (r *SQLiteRepository) RemoveSeriesAssignment(user string, series string, job string, guild string) (bool, error) {
-	res, err := r.SeriesAssignmentsExec(guild, "DELETE FROM series_assignments WHERE user = ? AND series = ? AND job = ? AND guild = ?", user, series, job, guild)
+	res, err := r.SeriesAssignmentsExec(guild, series, "DELETE FROM series_assignments WHERE user = ? AND series = ? AND job = ? AND guild = ?", user, series, job, guild)
 
 	if err != nil {
 		return false, err
@@ -335,7 +335,7 @@ func (r *SQLiteRepository) RemoveSeriesNote(series string, guild string, id int)
 
 // Remove all assignments for a user
 func (r *SQLiteRepository) RemoveAllAssignments(user string, guild string) (bool, error) {
-	res, err := r.SeriesAssignmentsExec(guild, "DELETE FROM series_assignments WHERE user = ? AND guild = ?", user, guild)
+	res, err := r.SeriesAssignmentsExec(guild, "", "DELETE FROM series_assignments WHERE user = ? AND guild = ?", user, guild)
 
 	if err != nil {
 		return false, err
@@ -351,7 +351,7 @@ func (r *SQLiteRepository) RemoveAllAssignments(user string, guild string) (bool
 
 // Remove series billboard
 func (r *SQLiteRepository) RemoveSeriesBillboard(series string, guild string) (bool, error) {
-	res, err := r.RolesBillboardsExec("DELETE FROM series_billboards WHERE series = ? AND guild = ?", series, guild)
+	res, err := r.SeriesBillboardsExec("DELETE FROM series_billboards WHERE series = ? AND guild = ?", series, guild)
 
 	if err != nil {
 		return false, err
@@ -399,7 +399,7 @@ func (r *SQLiteRepository) RemoveColorsBillboard(guild string) (bool, error) {
 
 // Update series name
 func (r *SQLiteRepository) UpdateSeriesName(nameSh string, newName string, guild string) (bool, error) {
-	res, err := r.SeriesExec(guild, "UPDATE series SET name_full = ? WHERE name_sh = ? AND guild = ?", newName, nameSh, guild)
+	res, err := r.SeriesExec(guild, nameSh, "UPDATE series SET name_full = ? WHERE name_sh = ? AND guild = ?", newName, nameSh, guild)
 
 	if err != nil {
 		return false, err
@@ -415,7 +415,7 @@ func (r *SQLiteRepository) UpdateSeriesName(nameSh string, newName string, guild
 
 // Update series repo link
 func (r *SQLiteRepository) UpdateSeriesRepoLink(nameSh string, newLink string, guild string) (bool, error) {
-	res, err := r.SeriesExec(guild, "UPDATE series SET repo_link = ? WHERE name_sh = ? AND guild = ?", newLink, nameSh, guild)
+	res, err := r.SeriesExec(guild, nameSh, "UPDATE series SET repo_link = ? WHERE name_sh = ? AND guild = ?", newLink, nameSh, guild)
 
 	if err != nil {
 		return false, err
