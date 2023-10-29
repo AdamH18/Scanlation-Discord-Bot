@@ -59,6 +59,7 @@ docker compose up -d
 | /remove_series_channel | admin only | Deregister a channel with a given series, channel is not deleted |
 | /add_user | admin only | Register a user as a member of the group |
 | /remove_user | admin only | Remove a user from the group, deletes all related settings. User is not kicked |
+| /remove_user_by_id | admin only | Remove a user from the group by manually input ID, deletes all related settings. User is not kicked |
 | /server_users | admin only | See all registered users on the server |
 | /add_job | admin only | Register a new job type for the group |
 | /add_global_job | owner only | Register a new job type for all users |

@@ -80,6 +80,7 @@ func (r *SQLiteRepository) SeriesExec(guild string, query string, args ...any) (
 		}
 	} else {
 		log.Println("Last insert value not found")
+		SeriesCh <- func() (string, string) { return guild, "" }
 		return res, nil
 	}
 	//If single series could be identified, update billboard

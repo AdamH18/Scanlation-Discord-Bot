@@ -63,6 +63,19 @@ type SeriesAssignment struct {
 	Guild  string
 }
 
+type SeriesNote struct {
+	Series string
+	Note   string
+	Guild  string
+}
+
+type SeriesBB struct {
+	Series  string
+	Guild   string
+	Channel string
+	Message string
+}
+
 type JobBB struct {
 	Guild   string
 	Channel string

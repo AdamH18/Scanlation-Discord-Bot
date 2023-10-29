@@ -267,3 +267,102 @@ func CreatePingRole(ser database.Series) (string, error) {
 	}
 	return role.ID, nil
 }
+
+// Creates choices for a series short name autocomplete
+func SeriesFullNameAutocomplete(start string, guild string) []*discordgo.ApplicationCommandOptionChoice {
+	ser, err := database.Repo.GetAllSeries(guild)
+	if err != nil {
+		return []*discordgo.ApplicationCommandOptionChoice{}
+	}
+
+	choices := []*discordgo.ApplicationCommandOptionChoice{}
+	for _, s := range ser {
+		if strings.HasPrefix(strings.ToLower(s.NameFull), strings.ToLower(start)) {
+			v := discordgo.ApplicationCommandOptionChoice{
+				Name:  s.NameFull,
+				Value: s.NameFull,
+			}
+			choices = append(choices, &v)
+		}
+	}
+	if len(choices) > 25 {
+		choices = choices[:25]
+	}
+	return choices
+}
+
+// Creates choices for a series short name autocomplete
+func SeriesShortNameAutocomplete(start string, guild string) []*discordgo.ApplicationCommandOptionChoice {
+	ser, err := database.Repo.GetAllSeries(guild)
+	if err != nil {
+		return []*discordgo.ApplicationCommandOptionChoice{}
+	}
+
+	choices := []*discordgo.ApplicationCommandOptionChoice{}
+	for _, s := range ser {
+		if strings.HasPrefix(strings.ToLower(s.NameSh), strings.ToLower(start)) {
+			v := discordgo.ApplicationCommandOptionChoice{
+				Name:  s.NameSh,
+				Value: s.NameSh,
+			}
+			choices = append(choices, &v)
+		}
+	}
+	if len(choices) > 25 {
+		choices = choices[:25]
+	}
+	return choices
+}
+
+// Creates choices for a job short name autocomplete (includes global jobs)
+func JobShortNameAutocomplete(start string, guild string) []*discordgo.ApplicationCommandOptionChoice {
+	ser, err := database.Repo.GetAllJobs(guild)
+	if err != nil {
+		return []*discordgo.ApplicationCommandOptionChoice{}
+	}
+
+	choices := []*discordgo.ApplicationCommandOptionChoice{}
+	for _, s := range ser {
+		if strings.HasPrefix(strings.ToLower(s.JobSh), strings.ToLower(start)) {
+			v := discordgo.ApplicationCommandOptionChoice{
+				Name:  s.JobSh,
+				Value: s.JobSh,
+			}
+			choices = append(choices, &v)
+		}
+	}
+	if len(choices) > 25 {
+		choices = choices[:25]
+	}
+	return choices
+}
+
+// Creates choices for a job short name autocomplete (excludes global jobs)
+func JobShortNameAutocompleteNonG(start string, guild string) []*discordgo.ApplicationCommandOptionChoice {
+	ser, err := database.Repo.GetAllJobs(guild)
+	if err != nil {
+		return []*discordgo.ApplicationCommandOptionChoice{}
+	}
+
+	serNG := []database.Job{}
+	for _, s := range ser {
+		if s.Guild != "GLOBAL" {
+			serNG = append(serNG, s)
+		}
+	}
+
+	choices := []*discordgo.ApplicationCommandOptionChoice{}
+	for _, s := range serNG {
+		if strings.HasPrefix(strings.ToLower(s.JobSh), strings.ToLower(start)) {
+			v := discordgo.ApplicationCommandOptionChoice{
+				Name:  s.JobSh,
+				Value: s.JobSh,
+			}
+			choices = append(choices, &v)
+		}
+	}
+	if len(choices) > 25 {
+		choices = choices[:25]
+	}
+	return choices
+}

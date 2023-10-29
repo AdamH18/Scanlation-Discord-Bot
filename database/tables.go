@@ -84,10 +84,11 @@ var tableQuerys = []string{
     `,
 	// Message for series billboard
 	`CREATE TABLE IF NOT EXISTS series_billboards(
-		series VARCHAR(100) PRIMARY KEY COLLATE NOCASE,
+		series VARCHAR(100) COLLATE NOCASE,
 		guild VARCHAR(20),
 		channel VARCHAR(30),
-		message VARCHAR(30)
+		message VARCHAR(30),
+		PRIMARY KEY(series, guild)
     );
     `,
 	// Message for roles billboard

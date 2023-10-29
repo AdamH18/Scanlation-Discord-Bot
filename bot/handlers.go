@@ -175,12 +175,7 @@ func AllRemindersHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		response = "Error getting reminders from database: " + err.Error()
 	} else {
 		//Build reminders table from results
-		resp, err := BuildVerboseRemindersTable(rems)
-		if err != nil {
-			response = "Error creating verbose reminders table: " + err.Error()
-		} else {
-			response = resp
-		}
+		response = BuildVerboseRemindersTable(rems)
 	}
 	Respond(s, i, response)
 }
@@ -474,6 +469,37 @@ func RemoveUserHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	LogCommand(i, "remove_user")
 	options := OptionsToMap(i.ApplicationCommandData().Options)
 	user := options["user"].UserValue(s).ID
+	log.Printf("User: %s", user)
+
+	//Removing user from DB
+	done, err := database.Repo.RemoveUser(user, i.GuildID)
+	response := ""
+	if err != nil {
+		response = "Error removing user from database: " + err.Error()
+	} else if !done {
+		response = "This user was not registered in the first place"
+	} else {
+		response = "Successfully removed user from database"
+
+		//If member role is set, remove role from user
+		mem := database.Repo.GetMemberRole(i.GuildID)
+		if mem != "" {
+			err = s.GuildMemberRoleRemove(i.GuildID, user, mem)
+			if err != nil {
+				response += "\nError removing member role: " + err.Error()
+			} else {
+				response += "\nMember role successfully removed"
+			}
+		}
+	}
+	Respond(s, i, response)
+}
+
+// Handler for remove_user_by_id
+func RemoveUserByIDHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "remove_user_by_id")
+	options := OptionsToMap(i.ApplicationCommandData().Options)
+	user := options["user"].StringValue()
 	log.Printf("User: %s", user)
 
 	//Removing user from DB
@@ -1136,6 +1162,67 @@ func RemVanityRoleHandler(s *discordgo.Session, i *discordgo.InteractionCreate) 
 	Respond(s, i, response)
 }
 
+// Handler for create_series_billboard
+func CreateSeriesBillboardHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "create_series_billboard")
+	options := OptionsToMap(i.ApplicationCommandData().Options)
+	series := options["series"].StringValue()
+	log.Printf("Series: %s", series)
+
+	bill, _, err := database.Repo.GetSeriesBillboard(series, i.GuildID)
+	if err != nil {
+		Respond(s, i, "Error getting existing billboard info: "+err.Error())
+		return
+	} else if bill != "" {
+		Respond(s, i, "Server already has a billboard for this series. Please remove the existing one first")
+		return
+	}
+
+	//Send a basic message to be turned into the billboard later
+	msg, err := s.ChannelMessageSend(i.ChannelID, "This message will become the billboard. If it doesn't something went wrong.")
+	if err != nil {
+		Respond(s, i, "Error sending message: "+err.Error())
+		return
+	}
+
+	bb := database.SeriesBB{
+		Series:  series,
+		Guild:   i.GuildID,
+		Channel: i.ChannelID,
+		Message: msg.ID,
+	}
+	err = database.Repo.AddSeriesBillboard(bb)
+	response := ""
+	if err != nil {
+		response = "Error updating database: " + err.Error()
+	} else {
+		response = "Successfully created assignments billboard"
+	}
+	Respond(s, i, response)
+
+	UpdateSeriesBillboard(series, i.GuildID)
+}
+
+// Handler for delete_series_billboard
+func DeleteSeriesBillboardHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	LogCommand(i, "delete_series_billboard")
+	options := OptionsToMap(i.ApplicationCommandData().Options)
+	series := options["series"].StringValue()
+	log.Printf("Series: %s", series)
+
+	//Removing roles billboard from DB
+	done, err := database.Repo.RemoveSeriesBillboard(series, i.GuildID)
+	response := ""
+	if err != nil {
+		response = "Error removing billboard from database: " + err.Error()
+	} else if !done {
+		response = "Could not locate billboard for removal"
+	} else {
+		response = "Successfully removed billboard from database"
+	}
+	Respond(s, i, response)
+}
+
 // Handler for create_assignments_billboard
 func CreateAssignmentsBillboardHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	LogCommand(i, "create_assignments_billboard")
@@ -1149,23 +1236,8 @@ func CreateAssignmentsBillboardHandler(s *discordgo.Session, i *discordgo.Intera
 		return
 	}
 
-	//Billboard should be created, so gather data
-	assMap, err := database.Repo.GetAllAssignments(i.GuildID)
-	if err != nil {
-		Respond(s, i, "Error getting server assignments info: "+err.Error())
-		return
-	}
-
-	embed, err := BuildFullAssignmentsEmbed(assMap, i.GuildID)
-	if err != nil {
-		Respond(s, i, "Error building embed: "+err.Error())
-		return
-	}
-
-	message := discordgo.MessageSend{
-		Embeds: []*discordgo.MessageEmbed{embed},
-	}
-	msg, err := s.ChannelMessageSendComplex(i.ChannelID, &message)
+	//Send a basic message to be turned into the billboard later
+	msg, err := s.ChannelMessageSend(i.ChannelID, "This message will become the billboard. If it doesn't something went wrong.")
 	if err != nil {
 		Respond(s, i, "Error sending message: "+err.Error())
 		return
@@ -1184,6 +1256,8 @@ func CreateAssignmentsBillboardHandler(s *discordgo.Session, i *discordgo.Intera
 		response = "Successfully created assignments billboard"
 	}
 	Respond(s, i, response)
+
+	UpdateAssignmentsBillboard(i.GuildID)
 }
 
 // Handler for delete_assignments_billboard
@@ -1216,23 +1290,8 @@ func CreateColorsBillboardHandler(s *discordgo.Session, i *discordgo.Interaction
 		return
 	}
 
-	//Billboard should be created, so gather data
-	assMap, err := database.Repo.GetAllColors(i.GuildID)
-	if err != nil {
-		Respond(s, i, "Error getting user color info: "+err.Error())
-		return
-	}
-
-	embed, err := BuildColorsEmbed(assMap, i.GuildID)
-	if err != nil {
-		Respond(s, i, "Error building embed: "+err.Error())
-		return
-	}
-
-	message := discordgo.MessageSend{
-		Embeds: []*discordgo.MessageEmbed{embed},
-	}
-	msg, err := s.ChannelMessageSendComplex(i.ChannelID, &message)
+	//Send a basic message to be turned into the billboard later
+	msg, err := s.ChannelMessageSend(i.ChannelID, "This message will become the billboard. If it doesn't something went wrong.")
 	if err != nil {
 		Respond(s, i, "Error sending message: "+err.Error())
 		return
@@ -1251,6 +1310,8 @@ func CreateColorsBillboardHandler(s *discordgo.Session, i *discordgo.Interaction
 		response = "Successfully created colors billboard"
 	}
 	Respond(s, i, response)
+
+	UpdateColorsBillboard(i.GuildID)
 }
 
 // Handler for delete_colors_billboard
@@ -1354,11 +1415,62 @@ func SendNotificationHandler(s *discordgo.Session, i *discordgo.InteractionCreat
 	Respond(s, i, fmt.Sprintf("%d messages sent successfully\n%d messages failed to send", good, bad))
 }
 
-// Creates handlers for all slash commands based on relationship defined in commandHandlers
+// Send autocomplete choices based on functions and locations indicated in completes var
+func AutoCompleteHandler(s *discordgo.Session, i *discordgo.InteractionCreate, completes []AutoComplete) {
+	data := i.ApplicationCommandData()
+	choices := []*discordgo.ApplicationCommandOptionChoice{}
+	focus := -1
+	for _, com := range completes {
+		//Identify focused autocomplete parameter and get choices for it
+		if data.Options[com.Loc].Focused {
+			choices = com.Choices(data.Options[com.Loc].StringValue(), i.GuildID)
+			focus = com.Loc
+			break
+		}
+	}
+
+	//Respond with choices, if error send reasonably detailed log
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionApplicationCommandAutocompleteResult,
+		Data: &discordgo.InteractionResponseData{
+			Choices: choices,
+		},
+	})
+	if err != nil {
+		log.Printf("Error sending autocomplete for command %s with focus %d to guild %s: %s", i.ApplicationCommandData().Name, focus, i.GuildID, err.Error())
+	}
+}
+
+// Creates all handlers for the bot
 func CreateHandlers() {
 	goBot.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
-			h(s, i)
+		switch i.Type {
+		//Routes handlers for all slash commands based on relationship defined in commandHandlers
+		case discordgo.InteractionApplicationCommand:
+			if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
+				h(s, i)
+			}
+		//Routes information required for autocomplete handlers
+		case discordgo.InteractionApplicationCommandAutocomplete:
+			if h, ok := completeHandlers[i.ApplicationCommandData().Name]; ok {
+				AutoCompleteHandler(s, i, h)
+			}
+		//Routes information for component interactions
+		case discordgo.InteractionMessageComponent:
+			loc := strings.Index(i.MessageComponentData().CustomID, " ")
+			func_router := i.MessageComponentData().CustomID[:loc]
+			identifier := i.MessageComponentData().CustomID[loc+1:]
+			if h, ok := componentHandlers[func_router]; ok {
+				h(s, i, identifier)
+			}
+		case discordgo.InteractionModalSubmit:
+			data := i.ModalSubmitData()
+			loc := strings.Index(data.CustomID, " ")
+			func_router := data.CustomID[:loc]
+			identifier := data.CustomID[loc+1:]
+			if h, ok := componentHandlers[func_router]; ok {
+				h(s, i, identifier)
+			}
 		}
 	})
 }

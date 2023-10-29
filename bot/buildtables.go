@@ -11,22 +11,21 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-// TODO: Fix tables to not error on user retrieval errors, just don't list that user
-
 // Returns table with all values in reminders DB included
-func BuildVerboseRemindersTable(rems []database.Reminder) (string, error) {
+func BuildVerboseRemindersTable(rems []database.Reminder) string {
 	var buf strings.Builder
 	w := tabwriter.NewWriter(&buf, 1, 1, 1, ' ', 0)
 	fmt.Fprintln(w, "Reminders for all users:\n\nID\tGuild\tChannel\tUser\tDays\tMessage\tRepeat\tTime\t")
 	for _, rem := range rems {
 		usr, err := GetUserName(rem.Guild, rem.User)
 		if err != nil {
-			return "", err
+			log.Printf("Error retrieving username for user %s from guild %s: %s\n", rem.User, rem.Guild, err.Error())
+			usr = ""
 		}
 		fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%d\t%s\t%t\t%s\t\n", rem.ID, rem.Guild, rem.Channel, usr, rem.Days, rem.Message, rem.Repeat, rem.Time)
 	}
 	w.Flush()
-	return "```\n" + buf.String() + "```", nil
+	return "```\n" + buf.String() + "```"
 }
 
 // Returns table with useful values in reminders DB included
@@ -132,7 +131,9 @@ func BuildSeriesAssignmentsEmbed(assMap map[string][]string, series string, guil
 		for _, user := range assMap[job] {
 			name, err := GetUserPing(guild, user)
 			if err != nil {
-				return nil, err
+				//Can occur if user leaves server without being removed from DB
+				log.Printf("Error retrieving user ping for user %s from guild %s: %s\n", user, guild, err.Error())
+				name = user
 			}
 			usersStr += name
 			color, err := database.Repo.GetUserColor(user, guild)
@@ -218,7 +219,8 @@ func BuildJobAssignmentsEmbed(assMap map[string][]string, job string, guild stri
 		userF := new(discordgo.MessageEmbedField)
 		userF.Name, err = GetUserName(guild, user)
 		if err != nil {
-			return nil, err
+			log.Printf("Error retrieving username for user %s from guild %s: %s\n", user, guild, err.Error())
+			userF.Name = user
 		}
 		//Build string for each set of series
 		seriesStr := ""
@@ -235,6 +237,38 @@ func BuildJobAssignmentsEmbed(assMap map[string][]string, job string, guild stri
 	}
 	embed.Fields = fields
 	return &embed, nil
+}
+
+// Builds embed for basic series info plus notes
+func BuildSeriesInfoEmbed(series database.Series, notes []string) *discordgo.MessageEmbed {
+	//Initialize embed
+	embed := discordgo.MessageEmbed{
+		Type:        discordgo.EmbedTypeRich,
+		Title:       series.NameFull,
+		Description: "Alias for commands - " + series.NameSh,
+	}
+	fields := []*discordgo.MessageEmbedField{}
+
+	//Add repo link field
+	if series.RepoLink != "" {
+		fields = append(fields, &discordgo.MessageEmbedField{Name: "Repo Link:", Value: series.RepoLink})
+	}
+
+	//Add notes field
+	if len(notes) != 0 {
+		ind := 1
+		text := ""
+		for _, n := range notes {
+			text += fmt.Sprintf("%d. %s\n", ind, n)
+			ind++
+		}
+		text = text[:len(text)-1]
+		fields = append(fields, &discordgo.MessageEmbedField{Name: "Series Notes:", Value: text})
+	}
+
+	embed.Fields = fields
+
+	return &embed
 }
 
 // Builds the embed for showing all assignments. Hierarchy is series-job-user
@@ -289,7 +323,8 @@ func BuildFullAssignmentsEmbed(assMap map[string]map[string][]string, guild stri
 			for _, user := range assMap[ser][job] {
 				userN, err := GetUserPing(guild, user)
 				if err != nil {
-					return nil, err
+					log.Printf("Error retrieving user ping for user %s from guild %s: %s\n", user, guild, err.Error())
+					userN = user
 				}
 				jobStr += userN + ", "
 			}
@@ -305,7 +340,7 @@ func BuildFullAssignmentsEmbed(assMap map[string]map[string][]string, guild stri
 }
 
 // Builds embed for showing user color prefs
-func BuildColorsEmbed(assMap map[string]string, guild string) (*discordgo.MessageEmbed, error) {
+func BuildColorsEmbed(assMap map[string]string, guild string) *discordgo.MessageEmbed {
 	//Initialize embed
 	embed := discordgo.MessageEmbed{
 		Type:        discordgo.EmbedTypeRich,
@@ -331,7 +366,8 @@ func BuildColorsEmbed(assMap map[string]string, guild string) (*discordgo.Messag
 	for key := range assMap {
 		nm, err := GetUserName(guild, key)
 		if err != nil {
-			return nil, err
+			log.Printf("Error retrieving username for user %s from guild %s: %s\n", key, guild, err.Error())
+			nm = key
 		}
 		namesToId[nm] = key
 		names = append(names, nm)
@@ -343,7 +379,8 @@ func BuildColorsEmbed(assMap map[string]string, guild string) (*discordgo.Messag
 	for _, name := range names {
 		ping, err := GetUserPing(guild, namesToId[name])
 		if err != nil {
-			return nil, err
+			log.Printf("Error retrieving user ping for user %s from guild %s: %s\n", name, guild, err.Error())
+			ping = name
 		}
 		text += ping + " - " + assMap[namesToId[name]] + "\n"
 	}
@@ -351,7 +388,7 @@ func BuildColorsEmbed(assMap map[string]string, guild string) (*discordgo.Messag
 	fields[0].Name = "Colors:"
 	fields[0].Value = text
 	embed.Fields = fields
-	return &embed, nil
+	return &embed
 }
 
 // Builds the embed for showing all server series

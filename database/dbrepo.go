@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"math"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -93,6 +94,28 @@ func (r *SQLiteRepository) AddMemberRole(mem MemberRole) error {
 // Add series channel entry to DB
 func (r *SQLiteRepository) AddSeriesChannels(sec SeriesChannels) error {
 	_, err := r.SeriesChannelsExec("REPLACE INTO series_channels(top, bottom, guild) values(?, ?, ?)", sec.Top, sec.Bottom, sec.Guild)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Add series note entry to DB
+func (r *SQLiteRepository) AddSeriesNote(ser SeriesNote) error {
+	_, err := r.SeriesNotesExec(ser.Guild, ser.Series, "INSERT INTO series_notes(series, note, guild) values(?, ?, ?)", strings.ToLower(ser.Series), ser.Note, ser.Guild)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Add roles billboard entry to DB
+func (r *SQLiteRepository) AddSeriesBillboard(bb SeriesBB) error {
+	_, err := r.RolesBillboardsExec("INSERT INTO series_billboards(series, guild, channel, message) values(?, ?, ?, ?)", bb.Series, bb.Guild, bb.Channel, bb.Message)
 
 	if err != nil {
 		return err
@@ -195,7 +218,7 @@ func (r *SQLiteRepository) RemoveSeries(nameSh string, nameFull string, guildId 
 	if done {
 		r.ChannelsExec("DELETE FROM channels WHERE series = ? AND guild = ?", nameSh, guildId)
 		r.SeriesAssignmentsExec(guildId, "DELETE FROM series_assignments WHERE series = ? AND guild = ?", nameSh, guildId)
-		r.SeriesBillboardsExec("DELETE FROM series_billboard WHERE series = ? AND guild = ?", nameSh, guildId)
+		r.SeriesBillboardsExec("DELETE FROM series_billboards WHERE series = ? AND guild = ?", nameSh, guildId)
 	}
 
 	return done, nil
@@ -294,9 +317,41 @@ func (r *SQLiteRepository) RemoveSeriesAssignment(user string, series string, jo
 	return rows > 0, nil
 }
 
+// Remove series assignment
+func (r *SQLiteRepository) RemoveSeriesNote(series string, guild string, id int) (bool, error) {
+	res, err := r.SeriesNotesExec(guild, series, "DELETE FROM series_notes WHERE ROWID = ?", id)
+
+	if err != nil {
+		return false, err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return rows > 0, nil
+}
+
 // Remove all assignments for a user
 func (r *SQLiteRepository) RemoveAllAssignments(user string, guild string) (bool, error) {
 	res, err := r.SeriesAssignmentsExec(guild, "DELETE FROM series_assignments WHERE user = ? AND guild = ?", user, guild)
+
+	if err != nil {
+		return false, err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return rows > 0, nil
+}
+
+// Remove series billboard
+func (r *SQLiteRepository) RemoveSeriesBillboard(series string, guild string) (bool, error) {
+	res, err := r.RolesBillboardsExec("DELETE FROM series_billboards WHERE series = ? AND guild = ?", series, guild)
 
 	if err != nil {
 		return false, err
@@ -641,6 +696,58 @@ func (r *SQLiteRepository) GetSeriesAssignments(series string, guild string) (ma
 	return assignments, nil
 }
 
+// Get all notes for a given series. Order is standardized for searching reasons
+func (r *SQLiteRepository) GetSeriesNotes(series string, guild string) ([]string, []int, error) {
+	res, err := r.db.Query("SELECT ROWID, note FROM series_notes WHERE series = ? AND guild = ?", series, guild)
+
+	if err != nil {
+		return nil, nil, err
+	}
+	defer res.Close()
+
+	//Return all notes for the series
+	notes := []string{}
+	ids := []int{}
+	for res.Next() {
+		var id, note string
+		if err := res.Scan(&id, &note); err != nil {
+			return nil, nil, err
+		}
+		notes = append(notes, note)
+		val, err := strconv.Atoi(id)
+		if err != nil {
+			return nil, nil, err
+		}
+		ids = append(ids, val)
+	}
+
+	//Ensure sorted with ROWID increasing
+	lenN := len(notes)
+	sortedNotes := []string{}
+	sortedIds := []int{}
+	for i := 0; i < lenN; i++ {
+		//Find location of lowest ID
+		min := -1
+		loc := -1
+		for j, val := range ids {
+			if val < min || min == -1 {
+				loc = j
+				min = val
+			}
+		}
+		//Add that to end of sorted slices
+		sortedNotes = append(sortedNotes, notes[loc])
+		sortedIds = append(sortedIds, ids[loc])
+		//Replace value there with end value and chop off last value of slice
+		notes[loc] = notes[len(notes)-1]
+		notes = notes[:len(notes)-1]
+		ids[loc] = ids[len(ids)-1]
+		ids = ids[:len(ids)-1]
+	}
+
+	return sortedNotes, sortedIds, nil
+}
+
 // Get all assignments for a given user
 func (r *SQLiteRepository) GetUserAssignments(user string, guild string) (map[string][]string, error) {
 	res, err := r.db.Query("SELECT series, job FROM series_assignments WHERE user = ? AND guild = ?", user, guild)
@@ -761,6 +868,28 @@ func (r *SQLiteRepository) GetSeriesFullName(seriesSh string, guild string) (str
 		return seriesFull, nil
 	} else {
 		return "", errors.New("failed to get full name from DB")
+	}
+}
+
+// Get all info on series from shorthand
+func (r *SQLiteRepository) GetAllSeriesInfo(seriesSh string, guild string) (Series, error) {
+	res, err := r.db.Query("SELECT name_full, ping_role, repo_link FROM series WHERE name_sh = ? AND guild = ?", seriesSh, guild)
+
+	if err != nil {
+		return Series{}, err
+	}
+	defer res.Close()
+
+	//If there was a result, return it
+	var seriesFull, pingRole, repoLink string
+	if res.Next() {
+		err = res.Scan(&seriesFull, &pingRole, &repoLink)
+		if err != nil {
+			return Series{}, err
+		}
+		return Series{NameSh: seriesSh, NameFull: seriesFull, Guild: guild, PingRole: pingRole, RepoLink: repoLink}, nil
+	} else {
+		return Series{}, errors.New("failed to get series info from DB")
 	}
 }
 
@@ -949,6 +1078,50 @@ func (r *SQLiteRepository) NumUsersWithVanity(role string, guild string) (int, e
 		count++
 	}
 	return count, nil
+}
+
+// Get series billboard message ID in guild
+func (r *SQLiteRepository) GetSeriesBillboard(series string, guild string) (string, string, error) {
+	res, err := r.db.Query("SELECT message, channel FROM series_billboards WHERE guild = ? AND series = ?", guild, series)
+
+	if err != nil {
+		return "", "", err
+	}
+	defer res.Close()
+
+	//If there was a result, return it
+	var message, channel string
+	if res.Next() {
+		err = res.Scan(&message, &channel)
+		if err != nil {
+			return "", "", err
+		}
+		return message, channel, nil
+	} else {
+		return "", "", nil
+	}
+}
+
+// Get all series billboards in guild
+func (r *SQLiteRepository) GetAllSeriesBillboards(guild string) ([]string, error) {
+	res, err := r.db.Query("SELECT series FROM series_billboards WHERE guild = ?", guild)
+
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	//If there was a result, return it
+	var series string
+	allSer := []string{}
+	for res.Next() {
+		err = res.Scan(&series)
+		if err != nil {
+			return nil, err
+		}
+		allSer = append(allSer, series)
+	}
+	return allSer, nil
 }
 
 // Get roles billboard message ID in guild

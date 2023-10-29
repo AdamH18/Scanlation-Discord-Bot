@@ -2,11 +2,17 @@ package bot
 
 import "github.com/bwmarrin/discordgo"
 
+type AutoComplete struct {
+	Loc     int
+	Choices func(string, string) []*discordgo.ApplicationCommandOptionChoice
+}
+
 var (
 	adminPerms int64 = discordgo.PermissionAdministrator
 	dmPerms          = false
 	daysMin          = 0.0
 	hourModMin       = -12.0
+	emptyStr         = ""
 
 	//Definitions for all slash commands and their expected parameters
 	commands = []*discordgo.ApplicationCommand{
@@ -250,16 +256,18 @@ var (
 			DefaultMemberPermissions: &adminPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "full-name",
-					Description: "Full name for the series",
-					Required:    true,
+					Type:         discordgo.ApplicationCommandOptionString,
+					Name:         "full-name",
+					Description:  "Full name for the series",
+					Required:     true,
+					Autocomplete: true,
 				},
 				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "short-name",
-					Description: "Shorthand name for the series (just to make sure)",
-					Required:    true,
+					Type:         discordgo.ApplicationCommandOptionString,
+					Name:         "short-name",
+					Description:  "Shorthand name for the series (just to make sure)",
+					Required:     true,
+					Autocomplete: true,
 				},
 			},
 		},
@@ -276,10 +284,11 @@ var (
 			DefaultMemberPermissions: &adminPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "short-name",
-					Description: "Shorthand name for the series",
-					Required:    true,
+					Type:         discordgo.ApplicationCommandOptionString,
+					Name:         "short-name",
+					Description:  "Shorthand name for the series",
+					Required:     true,
+					Autocomplete: true,
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
@@ -296,10 +305,11 @@ var (
 			DefaultMemberPermissions: &adminPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "short-name",
-					Description: "Shorthand name for the series",
-					Required:    true,
+					Type:         discordgo.ApplicationCommandOptionString,
+					Name:         "short-name",
+					Description:  "Shorthand name for the series",
+					Required:     true,
+					Autocomplete: true,
 				},
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
@@ -316,10 +326,11 @@ var (
 			DefaultMemberPermissions: &adminPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "series",
-					Description: "Shorthand for series to add to",
-					Required:    true,
+					Type:         discordgo.ApplicationCommandOptionString,
+					Name:         "series",
+					Description:  "Shorthand for series to add to",
+					Required:     true,
+					Autocomplete: true,
 				},
 			},
 		},
@@ -353,6 +364,20 @@ var (
 					Type:        discordgo.ApplicationCommandOptionUser,
 					Name:        "user",
 					Description: "The user to be removed",
+					Required:    true,
+				},
+			},
+		},
+		{
+			Name:                     "remove_user_by_id",
+			Description:              "Remove a user by ID (if left server), deletes all related settings. User is not kicked (admin only)",
+			DMPermission:             &dmPerms,
+			DefaultMemberPermissions: &adminPerms,
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "user_id",
+					Description: "The id of user to be removed",
 					Required:    true,
 				},
 			},
@@ -410,10 +435,11 @@ var (
 			DefaultMemberPermissions: &adminPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "name-short",
-					Description: "Shorthand for the job",
-					Required:    true,
+					Type:         discordgo.ApplicationCommandOptionString,
+					Name:         "name-short",
+					Description:  "Shorthand for the job",
+					Required:     true,
+					Autocomplete: true,
 				},
 			},
 		},
@@ -478,16 +504,18 @@ var (
 					Required:    true,
 				},
 				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "job",
-					Description: "Shorthand name for the job",
-					Required:    true,
+					Type:         discordgo.ApplicationCommandOptionString,
+					Name:         "job",
+					Description:  "Shorthand name for the job",
+					Required:     true,
+					Autocomplete: true,
 				},
 				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "series",
-					Description: "Shorthand name for the series",
-					Required:    false,
+					Type:         discordgo.ApplicationCommandOptionString,
+					Name:         "series",
+					Description:  "Shorthand name for the series",
+					Required:     false,
+					Autocomplete: true,
 				},
 			},
 		},
@@ -504,16 +532,18 @@ var (
 					Required:    true,
 				},
 				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "job",
-					Description: "Shorthand name for the job",
-					Required:    true,
+					Type:         discordgo.ApplicationCommandOptionString,
+					Name:         "job",
+					Description:  "Shorthand name for the job",
+					Required:     true,
+					Autocomplete: true,
 				},
 				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "series",
-					Description: "Shorthand name for the series",
-					Required:    false,
+					Type:         discordgo.ApplicationCommandOptionString,
+					Name:         "series",
+					Description:  "Shorthand name for the series",
+					Required:     false,
+					Autocomplete: true,
 				},
 			},
 		},
@@ -537,10 +567,11 @@ var (
 			DMPermission: &dmPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "series",
-					Description: "Series shorthand if non-contextual",
-					Required:    false,
+					Type:         discordgo.ApplicationCommandOptionString,
+					Name:         "series",
+					Description:  "Series shorthand if non-contextual",
+					Required:     false,
+					Autocomplete: true,
 				},
 			},
 		},
@@ -568,10 +599,11 @@ var (
 			DMPermission: &dmPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "job",
-					Description: "Job to check assignments for (shorthand)",
-					Required:    true,
+					Type:         discordgo.ApplicationCommandOptionString,
+					Name:         "job",
+					Description:  "Job to check assignments for (shorthand)",
+					Required:     true,
+					Autocomplete: true,
 				},
 			},
 		},
@@ -720,10 +752,11 @@ var (
 			DefaultMemberPermissions: &adminPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "series",
-					Description: "Shorthand name for the series",
-					Required:    true,
+					Type:         discordgo.ApplicationCommandOptionString,
+					Name:         "series",
+					Description:  "Shorthand name for the series",
+					Required:     true,
+					Autocomplete: true,
 				},
 			},
 		},
@@ -734,10 +767,11 @@ var (
 			DefaultMemberPermissions: &adminPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "series",
-					Description: "Shorthand name for the series",
-					Required:    true,
+					Type:         discordgo.ApplicationCommandOptionString,
+					Name:         "series",
+					Description:  "Shorthand name for the series",
+					Required:     true,
+					Autocomplete: true,
 				},
 			},
 		},
@@ -800,7 +834,6 @@ var (
 		"help": HelpHandler,
 		//"admin_help": AdminHelpHandler,
 
-		//TODO: Investigate autocomplete - https://github.com/bwmarrin/discordgo/blob/master/examples/autocomplete/main.go
 		//TODO: Organize by subcommands
 
 		"add_any_reminder": AddAnyReminderHandler,
@@ -822,6 +855,7 @@ var (
 		"remove_series_channel": RemoveSeriesChannelHandler,
 		"add_user":              AddUserHandler,
 		"remove_user":           RemoveUserHandler,
+		"remove_user_by_id":     RemoveUserByIDHandler,
 		"server_users":          ServerUsersHandler,
 		"add_job":               AddJobHandler,
 		"add_global_job":        AddGlobalJobHandler,
@@ -851,8 +885,8 @@ var (
 		"vanity_role":     VanityRoleHandler,
 		"rem_vanity_role": RemVanityRoleHandler,
 
-		//"create_series_billboard":      CreateSeriesBillboardHandler,
-		//"delete_series_billboard":      DeleteSeriesBillboardHandler,
+		"create_series_billboard":      CreateSeriesBillboardHandler,
+		"delete_series_billboard":      DeleteSeriesBillboardHandler,
 		"create_assignments_billboard": CreateAssignmentsBillboardHandler,
 		"delete_assignments_billboard": DeleteAssignmentsBillboardHandler,
 		"create_colors_billboard":      CreateColorsBillboardHandler,
@@ -861,5 +895,26 @@ var (
 
 		"add_notification_channel": AddNotificationChannelHandler,
 		"send_notification":        SendNotificationHandler,
+	}
+
+	completeHandlers = map[string][]AutoComplete{
+		"remove_series":            {AutoComplete{Loc: 0, Choices: SeriesFullNameAutocomplete}, AutoComplete{Loc: 1, Choices: SeriesShortNameAutocomplete}},
+		"change_series_title":      {AutoComplete{Loc: 0, Choices: SeriesShortNameAutocomplete}},
+		"change_series_repo":       {AutoComplete{Loc: 0, Choices: SeriesShortNameAutocomplete}},
+		"add_series_channel":       {AutoComplete{Loc: 0, Choices: SeriesShortNameAutocomplete}},
+		"remove_job":               {AutoComplete{Loc: 0, Choices: JobShortNameAutocompleteNonG}},
+		"add_series_assignment":    {AutoComplete{Loc: 1, Choices: JobShortNameAutocomplete}, AutoComplete{Loc: 2, Choices: SeriesShortNameAutocomplete}},
+		"remove_series_assignment": {AutoComplete{Loc: 1, Choices: JobShortNameAutocomplete}, AutoComplete{Loc: 2, Choices: SeriesShortNameAutocomplete}},
+		"series_assignments":       {AutoComplete{Loc: 0, Choices: SeriesShortNameAutocomplete}},
+		"job_assignments":          {AutoComplete{Loc: 0, Choices: JobShortNameAutocomplete}},
+		"create_series_billboard":  {AutoComplete{Loc: 0, Choices: SeriesShortNameAutocomplete}},
+		"delete_series_billboard":  {AutoComplete{Loc: 0, Choices: SeriesShortNameAutocomplete}},
+	}
+
+	componentHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, identifier string){
+		"note_add_button":    NoteAddButtonHandler,
+		"note_add_modal":     NoteAddModalHandler,
+		"note_remove_button": NoteRemoveButtonHandler,
+		"note_remove_modal":  NoteRemoveModalHandler,
 	}
 )
