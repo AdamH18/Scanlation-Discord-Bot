@@ -376,7 +376,7 @@ var (
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "user_id",
+					Name:        "user",
 					Description: "The id of user to be removed",
 					Required:    true,
 				},

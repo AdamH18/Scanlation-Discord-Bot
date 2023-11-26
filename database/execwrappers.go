@@ -55,6 +55,7 @@ func (r *SQLiteRepository) SeriesExec(guild string, series string, query string,
 	}
 	//Otherwise update billboard based on passed values
 	SeriesCh <- func() (string, string) { return guild, series }
+	AssignmentsCh <- guild
 	return res, nil
 }
 

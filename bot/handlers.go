@@ -1383,7 +1383,7 @@ func SendNotificationHandler(s *discordgo.Session, i *discordgo.InteractionCreat
 		if message[i] != '\\' {
 			continue
 		}
-		if i == len(message)-1 || (message[i+1] != 'n' && message[i+1] != '\\') {
+		if i == len(message)-1 {
 			continue
 		}
 		if message[i+1] == 'n' {
