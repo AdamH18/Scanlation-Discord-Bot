@@ -45,7 +45,7 @@ jobs:
           go mod download
           CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o scanlation-discord-bot .
       - name: Artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: scanlation-discord-bot
           path: scanlation-discord-bot
