@@ -3,6 +3,7 @@ package bot
 import (
 	"fmt"
 	"log"
+	"runtime/debug"
 	"scanlation-discord-bot/config"
 	"scanlation-discord-bot/database"
 	"strconv"
@@ -703,8 +704,17 @@ func AddSeriesAssignmentHandler(s *discordgo.Session, i *discordgo.InteractionCr
 
 	//Check if user, series, and job exist
 	if !database.Repo.RegisteredUser(sea.User, sea.Guild) {
-		Respond(s, i, "Could not find user in database. Did not register assignment")
-		return
+		var usr database.User
+		usr.Guild = sea.Guild
+		usr.Color = ""
+		usr.VanityRole = ""
+		usr.User = sea.User
+
+		err := database.Repo.AddUser(usr)
+		if err != nil {
+			Respond(s, i, "User was not registered, attempted to add but ran into error: "+err.Error())
+			return
+		}
 	}
 	if !database.Repo.RegisteredSeries(sea.Series, sea.Guild) {
 		Respond(s, i, "Could not find series in database. Did not register assignment")
@@ -1416,17 +1426,17 @@ func SendNotificationHandler(s *discordgo.Session, i *discordgo.InteractionCreat
 }
 
 // Send autocomplete choices based on functions and locations indicated in completes var
-func AutoCompleteHandler(s *discordgo.Session, i *discordgo.InteractionCreate, completes []AutoComplete) {
+func AutoCompleteHandler(s *discordgo.Session, i *discordgo.InteractionCreate, completes map[string]AutoComplete) {
 	data := i.ApplicationCommandData()
 	choices := []*discordgo.ApplicationCommandOptionChoice{}
-	focus := -1
-	for _, com := range completes {
-		//Identify focused autocomplete parameter and get choices for it
-		if data.Options[com.Loc].Focused {
-			choices = com.Choices(data.Options[com.Loc].StringValue(), i.GuildID)
-			focus = com.Loc
-			break
+
+	//Identify focused autocomplete parameter and get choices for it
+	for _, option := range data.Options {
+		if !option.Focused {
+			continue
 		}
+		choices = completes[option.Name].Choices(option.StringValue(), i.GuildID)
+		break
 	}
 
 	//Respond with choices, if error send reasonably detailed log
@@ -1437,40 +1447,71 @@ func AutoCompleteHandler(s *discordgo.Session, i *discordgo.InteractionCreate, c
 		},
 	})
 	if err != nil {
-		log.Printf("Error sending autocomplete for command %s with focus %d to guild %s: %s", i.ApplicationCommandData().Name, focus, i.GuildID, err.Error())
+		log.Printf("Error sending autocomplete for command %s to guild %s: %s", i.ApplicationCommandData().Name, i.GuildID, err.Error())
 	}
 }
 
-// Creates all handlers for the bot
+// Add handlers and deal with unexpected errors without crashing whole app
 func CreateHandlers() {
 	goBot.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		switch i.Type {
-		//Routes handlers for all slash commands based on relationship defined in commandHandlers
-		case discordgo.InteractionApplicationCommand:
-			if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
-				h(s, i)
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf(
+					"panic in interaction handler: %v\n%s",
+					r,
+					debug.Stack(),
+				)
 			}
-		//Routes information required for autocomplete handlers
-		case discordgo.InteractionApplicationCommandAutocomplete:
-			if h, ok := completeHandlers[i.ApplicationCommandData().Name]; ok {
-				AutoCompleteHandler(s, i, h)
-			}
-		//Routes information for component interactions
-		case discordgo.InteractionMessageComponent:
-			loc := strings.Index(i.MessageComponentData().CustomID, " ")
-			func_router := i.MessageComponentData().CustomID[:loc]
-			identifier := i.MessageComponentData().CustomID[loc+1:]
-			if h, ok := componentHandlers[func_router]; ok {
-				h(s, i, identifier)
-			}
-		case discordgo.InteractionModalSubmit:
-			data := i.ModalSubmitData()
-			loc := strings.Index(data.CustomID, " ")
-			func_router := data.CustomID[:loc]
-			identifier := data.CustomID[loc+1:]
-			if h, ok := componentHandlers[func_router]; ok {
-				h(s, i, identifier)
-			}
-		}
+		}()
+
+		handleInteraction(s, i)
 	})
+}
+
+// Creates all handlers for the bot
+func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	// Register users automatically on interaction with bot
+	if !database.Repo.RegisteredUser(i.Member.User.ID, i.GuildID) {
+		var usr database.User
+		usr.Guild = i.Member.User.ID
+		usr.Color = ""
+		usr.VanityRole = ""
+		usr.User = i.GuildID
+
+		err := database.Repo.AddUser(usr)
+		if err != nil {
+			log.Printf("Failed to register unregistered user automatically: " + err.Error())
+		} else {
+			log.Printf("Successfully automatically added user %s (%s) to guild %s", i.Member.User.Username, i.Member.User.ID, i.GuildID)
+		}
+	}
+
+	switch i.Type {
+	//Routes handlers for all slash commands based on relationship defined in commandHandlers
+	case discordgo.InteractionApplicationCommand:
+		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
+			h(s, i)
+		}
+	//Routes information required for autocomplete handlers
+	case discordgo.InteractionApplicationCommandAutocomplete:
+		if h, ok := completeHandlers[i.ApplicationCommandData().Name]; ok {
+			AutoCompleteHandler(s, i, h)
+		}
+	//Routes information for component interactions
+	case discordgo.InteractionMessageComponent:
+		loc := strings.Index(i.MessageComponentData().CustomID, " ")
+		func_router := i.MessageComponentData().CustomID[:loc]
+		identifier := i.MessageComponentData().CustomID[loc+1:]
+		if h, ok := componentHandlers[func_router]; ok {
+			h(s, i, identifier)
+		}
+	case discordgo.InteractionModalSubmit:
+		data := i.ModalSubmitData()
+		loc := strings.Index(data.CustomID, " ")
+		func_router := data.CustomID[:loc]
+		identifier := data.CustomID[loc+1:]
+		if h, ok := componentHandlers[func_router]; ok {
+			h(s, i, identifier)
+		}
+	}
 }

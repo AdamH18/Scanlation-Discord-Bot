@@ -3,7 +3,6 @@ package bot
 import "github.com/bwmarrin/discordgo"
 
 type AutoComplete struct {
-	Loc     int
 	Choices func(string, string) []*discordgo.ApplicationCommandOptionChoice
 }
 
@@ -897,18 +896,18 @@ var (
 		"send_notification":        SendNotificationHandler,
 	}
 
-	completeHandlers = map[string][]AutoComplete{
-		"remove_series":            {AutoComplete{Loc: 0, Choices: SeriesFullNameAutocomplete}, AutoComplete{Loc: 1, Choices: SeriesShortNameAutocomplete}},
-		"change_series_title":      {AutoComplete{Loc: 0, Choices: SeriesShortNameAutocomplete}},
-		"change_series_repo":       {AutoComplete{Loc: 0, Choices: SeriesShortNameAutocomplete}},
-		"add_series_channel":       {AutoComplete{Loc: 0, Choices: SeriesShortNameAutocomplete}},
-		"remove_job":               {AutoComplete{Loc: 0, Choices: JobShortNameAutocompleteNonG}},
-		"add_series_assignment":    {AutoComplete{Loc: 1, Choices: JobShortNameAutocomplete}, AutoComplete{Loc: 2, Choices: SeriesShortNameAutocomplete}},
-		"remove_series_assignment": {AutoComplete{Loc: 1, Choices: JobShortNameAutocomplete}, AutoComplete{Loc: 2, Choices: SeriesShortNameAutocomplete}},
-		"series_assignments":       {AutoComplete{Loc: 0, Choices: SeriesShortNameAutocomplete}},
-		"job_assignments":          {AutoComplete{Loc: 0, Choices: JobShortNameAutocomplete}},
-		"create_series_billboard":  {AutoComplete{Loc: 0, Choices: SeriesShortNameAutocomplete}},
-		"delete_series_billboard":  {AutoComplete{Loc: 0, Choices: SeriesShortNameAutocomplete}},
+	completeHandlers = map[string]map[string]AutoComplete{
+		"remove_series":            {"full-name": AutoComplete{Choices: SeriesFullNameAutocomplete}, "short-name": AutoComplete{Choices: SeriesShortNameAutocomplete}},
+		"change_series_title":      {"short-name": AutoComplete{Choices: SeriesShortNameAutocomplete}},
+		"change_series_repo":       {"short-name": AutoComplete{Choices: SeriesShortNameAutocomplete}},
+		"add_series_channel":       {"series": AutoComplete{Choices: SeriesShortNameAutocomplete}},
+		"remove_job":               {"name-short": AutoComplete{Choices: JobShortNameAutocompleteNonG}},
+		"add_series_assignment":    {"job": AutoComplete{Choices: JobShortNameAutocomplete}, "series": AutoComplete{Choices: SeriesShortNameAutocomplete}},
+		"remove_series_assignment": {"job": AutoComplete{Choices: JobShortNameAutocomplete}, "series": AutoComplete{Choices: SeriesShortNameAutocomplete}},
+		"series_assignments":       {"series": AutoComplete{Choices: SeriesShortNameAutocomplete}},
+		"job_assignments":          {"job": AutoComplete{Choices: JobShortNameAutocomplete}},
+		"create_series_billboard":  {"series": AutoComplete{Choices: SeriesShortNameAutocomplete}},
+		"delete_series_billboard":  {"series": AutoComplete{Choices: SeriesShortNameAutocomplete}},
 	}
 
 	componentHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, identifier string){
