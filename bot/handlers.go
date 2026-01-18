@@ -1473,10 +1473,10 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	// Register users automatically on interaction with bot
 	if !database.Repo.RegisteredUser(i.Member.User.ID, i.GuildID) {
 		var usr database.User
-		usr.Guild = i.Member.User.ID
+		usr.Guild = i.GuildID
 		usr.Color = ""
 		usr.VanityRole = ""
-		usr.User = i.GuildID
+		usr.User = i.Member.User.ID
 
 		err := database.Repo.AddUser(usr)
 		if err != nil {
